@@ -1,0 +1,107 @@
+.map-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 0;
+}
+
+.mapboxgl-canvas {
+  height: 100%;
+  width: 100%;
+  display: block;
+}
+
+.mapboxgl-popup {
+  max-width: 200px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.9rem;
+}
+
+.mapboxgl-popup-content {
+  padding: 0.5rem 0.75rem;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.simple-map-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ecf0f1;
+  padding: 2rem;
+  height: 100%;
+}
+
+.simple-map-content {
+  text-align: center;
+  max-width: 600px;
+  color: #2c3e50;
+}
+
+.simple-map-content h3 {
+  margin-bottom: 1rem;
+  color: #34495e;
+}
+
+.simple-map-content p {
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.simple-markers-list {
+  text-align: left;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #bdc3c7;
+}
+
+.simple-markers-list h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.simple-markers-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.simple-markers-list li {
+  padding: 0.75rem;
+  border-bottom: 1px solid #ecf0f1;
+  color: #2c3e50;
+}
+
+.simple-markers-list li:last-child {
+  border-bottom: none;
+}
+
+.simple-markers-list small {
+  color: #7f8c8d;
+}
+
+.map-attribution {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #666;
+  z-index: 1000;
+  max-width: 300px;
+  line-height: 1.3;
+}
+
+.map-attribution a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.map-attribution a:hover {
+  text-decoration: underline;
+}

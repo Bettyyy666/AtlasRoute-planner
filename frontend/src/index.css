@@ -1,0 +1,37 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+#root {
+  margin: 0;
+  padding: 0;
+}
+
+body.dark-mode {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+body.dark-mode .header {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+body.dark-mode .nav-link {
+  color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .nav-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .nav-link.active {
+  background: #00b894;
+}
+
+body.dark-mode .branding {
+  color: #ffffff;
+}
