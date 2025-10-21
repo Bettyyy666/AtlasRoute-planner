@@ -22,9 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-<<<<<<< HEAD
-
 # Ignore environment files
-=======
->>>>>>> a7e9e6e8cd8291bb5f56e6557d408080b1a66a90
 .env
+
+# Playwright test results
+playwright-report/
+test-results/
