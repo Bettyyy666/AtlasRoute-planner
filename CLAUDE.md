@@ -33,9 +33,31 @@ npm run preview                # Preview production build
 # Backend tests
 cd backend && npm test
 
-# Playwright tests (requires backend running)
+# Frontend tests (Playwright)
+npx playwright test            # Run frontend E2E tests
+
+# Backend Playwright tests (requires backend running)
 cd backend && npm run dev      # Terminal 1
-npx playwright test            # Terminal 2
+npx playwright test            # Terminal 2 (from backend directory)
+
+# Run specific test files
+npm run test:file -- path/to/test/file.test.ts
+```
+
+### Project Root Commands
+From the project root directory (`/pins-and-pathfinding-rzhou52-yyu111`):
+```bash
+# Install all dependencies
+npm install                    # Install root dependencies
+cd backend && npm install      # Install backend dependencies
+cd ../frontend && npm install  # Install frontend dependencies
+
+# Run both frontend and backend concurrently
+# Terminal 1: Backend
+cd backend && npm run dev
+
+# Terminal 2: Frontend  
+cd frontend && npm run dev
 ```
 
 ## Architecture Overview
@@ -64,19 +86,25 @@ npx playwright test            # Terminal 2
 ```
 backend/src/
 ├── server.ts                  # Main app and handler registration
-├── globalVariables.ts         # Shared caches
-├── activity-parser/           # Google Sheets activity data fetching
+├── globalVariables.ts         # Shared caches and global state
+├── activity-parser/           # Google Sheets activity data fetching and parsing
 ├── weather-parser/            # Open-Meteo API + Voronoi diagram generation
 ├── filter/                    # Activity filtering with enrichment (weather/redlining)
-├── street-graph/              # A* pathfinding with lazy tile loading
+├── street-graph/              # A* and Dijkstra pathfinding with lazy tile loading
 ├── tile-manager/              # Tile tracking and activity bucketing
 ├── fbi-query/                 # FBI Crime Data API integration
 ├── acs/                       # Census ACS data proxy
-├── red-linning/               # Historical redlining data filtering
+├── red-linning/               # Historical redlining data filtering and analysis
 ├── geographic-boundaries/     # State/county boundary lookups
-├── firebase/                  # Trip persistence (Firestore)
+├── firebase/                  # Trip persistence with Firestore
 ├── CSV-parser/                # Secure CSV parsing with path traversal prevention
-└── SupplementalChallenge4/    # Transit data integration
+├── initial-loc-parser/        # Initial location data parsing
+├── SupplementalChallenge3/    # Security threat handling (rate limiting)
+├── SupplementalChallenge4/    # Transit data integration
+├── voronoi-diagram-generator/ # Voronoi spatial partitioning
+├── middleware/                # Authentication middleware
+├── utils/                     # Utility functions
+└── tests/                     # Unit and integration tests
 ```
 
 **External API Integrations**:
@@ -86,6 +114,16 @@ backend/src/
 - **Google Sheets**: Activity data source
 - **ICPSR National Transit Map**: Transit stops and routes
 - **Firebase/Firestore**: User trip storage (partial implementation)
+
+**Key Dependencies**:
+- `express` (4.21.2): Web server framework
+- `zod` (3.25.67): Schema validation
+- `d3-delaunay` (6.0.4): Voronoi diagram generation
+- `node-cache` (5.1.2): In-memory caching
+- `firebase-admin` (13.5.0): Firebase server SDK
+- `node-fetch` (3.3.2): HTTP client for API calls
+- `cors` (2.8.5): Cross-origin resource sharing
+- `dotenv` (17.0.1): Environment variable management
 
 **FIPS Code Resolution Chain**:
 ```
@@ -100,7 +138,7 @@ State Abbr + ORI → FBI API query
 
 ### Frontend Architecture
 
-**Framework**: React 19.1.0 with TypeScript, Vite build tool
+**Framework**: React 19.1.0 with TypeScript, Vite 5.0.0 build tool
 
 **Entry Point**: `frontend/src/main.tsx` → `App.tsx` (router and context providers)
 
@@ -126,33 +164,43 @@ frontend/src/
 │   ├── Filters/              # Comprehensive filter UI (price, weather, amenities)
 │   └── DataQuery/            # Census and FBI data query interface
 ├── components/
-│   ├── LocationPicker/       # Dropdown with keyboard navigation
+│   ├── Button/               # Reusable button components
+│   ├── Card/                 # Card layout components
 │   ├── DatePicker/           # React DatePicker wrapper
 │   ├── Header/               # Navigation with auth status
-│   └── Button/, Card/, Input/
-└── contexts/
-    ├── DarkModeContext.tsx
-    └── SimpleModeContext.tsx
+│   ├── Input/                # Form input components
+│   └── LocationPicker/       # Dropdown with keyboard navigation
+├── contexts/
+│   ├── DarkModeContext.tsx   # Dark/light theme context
+│   └── SimpleModeContext.tsx # Simple mode context
+├── firebase/
+│   └── firebaseConfig.ts     # Firebase configuration
+├── types/
+│   └── geographicBoundaries.ts # Type definitions
+└── assets/
+    └── beach-scene.png       # Static assets
 ```
 
 **Backend Communication**:
 - Base URL: `http://localhost:3001`
 - HTTP client: Axios (1.10.0)
-- All responses validated with Zod schemas
+- All responses validated with Zod schemas (3.25.71)
 
 **Major Dependencies**:
 - `mapbox-gl` (3.13.0): Interactive maps with GeoJSON overlays
-- `@dnd-kit/*`: Drag-and-drop itinerary management
+- `@dnd-kit/core` (6.3.1), `@dnd-kit/modifiers` (9.0.0), `@dnd-kit/sortable` (10.0.0): Drag-and-drop itinerary management
 - `firebase` (12.2.1): Authentication and Firestore
 - `react-router-dom` (7.6.3): Client-side routing
 - `react-toastify` (11.0.5): Toast notifications
 - `date-fns` (4.1.0): Date utilities
-- `zod` (3.25.71): Schema validation
+- `react-datepicker` (8.4.0): Date selection component
+- `lodash.debounce` (4.0.8): Debounce utilities
+- `@clerk/clerk-react` (5.47.0): Authentication (alternative to Firebase)
 
-**Mapbox Integration** (`MapView.tsx`):
+**Mapbox Integration**:
 - Displays activity markers from itinerary
 - Overlays: Weather polygons, redlining zones, state/county boundaries
-- Tile tracking via `TileManager.tsx` with 500ms debounce
+- Tile tracking via debounced updates (500ms)
 - APIs: `/upload-weather-csv`, `/highlight-redlining`, `/geographic-boundaries`, `/update-visible-tiles`
 
 **Accessibility Features**:
@@ -160,6 +208,7 @@ frontend/src/
 - Keyboard navigation (Arrow keys, Enter, Escape)
 - Keyboard shortcuts (Ctrl+1/2/3 for highlight modes, Ctrl+B for best route, Ctrl+S to save)
 - Focus indicators and semantic HTML
+- Comprehensive screen reader support throughout components
 
 ## Environment Configuration
 
@@ -195,14 +244,22 @@ SPREADSHEET=https://docs.google.com/spreadsheets/d/1966LRbZilujssoH7i9mXXpTeDbQ9
 ### Frontend Environment Variables
 Create `.env` in `/frontend` with:
 ```
-VITE_MAPBOX_TOKEN=...
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=...
-VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
+# Mapbox Access Token (required for interactive maps)
+VITE_MAPBOX_TOKEN=pk.your-mapbox-token-here
+
+# Firebase Configuration (optional - for authentication and trip saving)
+VITE_FIREBASE_API_KEY=your-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=your-app-id
+
+# Backend API URL (defaults to localhost:3001)
+VITE_API_BASE_URL=http://localhost:3001
 ```
+
+**Note**: The frontend will function without Firebase configuration, but authentication and trip saving features will be disabled.
 
 ## Key Backend Endpoints
 
@@ -279,6 +336,30 @@ VITE_FIREBASE_APP_ID=...
 7. **Firebase Auth Popup COOP Error**: Fixed "Cross-Origin-Opener-Policy policy would block the window.close call"
    - Issue: Vite dev server's default COOP headers prevent Firebase from closing auth popups
    - Solution: Configure Vite server headers with `"Cross-Origin-Opener-Policy": "same-origin-allow-popups"`
+8. **Race Conditions in CSV Loading**: Fixed data leak issues with separate load/view endpoints
+   - Issue: Multiple clients calling separate loadcsv/viewcsv endpoints could access each other's data
+   - Solution: Consolidated into single `getcsv` endpoint to prevent cross-client data leakage
+9. **ACS Proxy Validation**: Fixed failing tests for invalid granularity combinations
+   - Issue: Mock ACS proxy handler didn't validate granularity hierarchy properly
+   - Solution: Added validation logic to ensure proper granularity level combinations
+10. **FBI Employee API Format Mismatch**: Fixed live demo failure due to mock vs real data format differences
+    - Issue: Unit tests passed with mock data but failed with real FBI dataset format
+    - Solution: Updated tests to use real dataset format and verified API integration
+11. **Firestore Composite Index Error**: Fixed `FAILED_PRECONDITION` errors for trip queries
+    - Issue: Combined `where()` filters with `orderBy()` required missing Firestore composite index
+    - Solution: Added graceful fallback with in-memory sorting when index is building
+12. **Browser-Specific Test Failures**: Fixed Firefox test failures during parallel execution
+    - Issue: Firefox's slower DOM rendering caused race conditions with database operations
+    - Solution: Configured Playwright to run tests sequentially or use single browser
+13. **API Test Failures**: Fixed Filter and Find Path endpoint tests expecting 200 but receiving 500
+    - Issue: Missing parameter validation in mock handlers caused internal server errors
+    - Solution: Implemented proper parameter validation and appropriate response codes
+14. **Authentication Security Vulnerability**: Fixed backend accepting unverified client-supplied user IDs
+    - Issue: Backend trusted `userId` from requests without server-side token verification
+    - Solution: Implemented Firebase Admin SDK token verification middleware
+15. **Accessibility Implementation Issues**: Fixed inconsistent screen reader announcements and missing labels
+    - Issue: Hardcoded aria-labels instead of systematic approach, inconsistent focus management
+    - Solution: Standardized accessibility messaging and improved focus transitions
 
 ### Current Limitations
 - Simple mode only accessible from landing page - mode controls not available in Planner view
@@ -330,11 +411,12 @@ This codebase evolved through multiple sprints:
 - **Sprint 3**: Backend API server with FBI and Census integration
 - **Sprint 4**: Transit data, enhanced error handling, Playwright tests
 - **Sprint 5**: Frontend implementation with accessibility focus, dark/simple modes
-- **Current**: Travel planner with comprehensive geospatial features
+- **Sprint 6**: Travel planner with comprehensive geospatial features
+- **Current Sprint**: 
 
 When debugging, check sprint README files:
 - `backend/README3.md`, `backend/README4.md`
-- `frontend/README5.md`
+- `frontend/README5.md`, `frontend/README6.md`
 
 ## Useful References
 

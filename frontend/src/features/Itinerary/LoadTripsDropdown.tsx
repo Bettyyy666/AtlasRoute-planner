@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { ActivitiesByDate } from "./ItineraryPanel";
+import { auth } from "../../firebase/firebaseConfig";
 
 type Location = {
   name: string;
@@ -52,10 +53,16 @@ export default function LoadTripsDropdown({
     setError(null);
 
     try {
+      // Get the current user's ID token
+      const token = await auth.currentUser?.getIdToken();
+      
       const response = await axios.get(
         `http://localhost:3001/trips/${userId}`,
         {
           params: { destination: destinationName },
+          headers: {
+            Authorization: token ? `Bearer ${token}` : '',
+          },
         }
       );
 
