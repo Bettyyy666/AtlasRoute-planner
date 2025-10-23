@@ -1,6 +1,54 @@
 # Sprint 7: Pathfinding
 
 ### Task A: Code Walk
+#### Core Components
+
+1. **Graph Data Structure**
+- Defined in `graphSchema.ts`:
+  - `GraphNode`: Represents points with latitude/longitude coordinates
+  - `GraphEdge`: Represents weighted connections between nodes
+  - `GraphTile`: Contains nodes and adjacency lists for a geographic region
+
+2. **Tile Management System**
+- The map is divided into tiles (0.1 degree squares)
+- `tileUtils.ts` manages:
+  - Coordinate to tile key conversion
+  - On-demand graph data loading
+  - Geographic distance calculations using Haversine formula
+
+3. **Data Flow**
+```
+Frontend Request → /find-path endpoint
+  ↓
+handleShortestPathRequest():
+  1. Load required map tiles
+  2. Find nearest nodes to start/end points
+  3. Execute routing algorithm (A*/Dijkstra)
+  4. Convert node IDs back to coordinates
+  ↓
+Frontend receives path coordinates
+```
+
+#### Integration Points
+
+The backend exposes a RESTful endpoint `/find-path` that accepts:
+```typescript
+POST {
+  points: [
+    { lat: number, lng: number },  // start
+    { lat: number, lng: number }   // end
+  ]
+}
+```
+
+And returns:
+```typescript
+{
+  path: [
+    { lat: number, lng: number },  // waypoints...
+  ]
+}
+```
 
 ### Task C: Communicating Concerns 
 #### Step 1
