@@ -37,7 +37,7 @@ export default function Header() {
 
   return (
     <header className="header">
-      <div className="branding">Name of Product</div>
+      <div className="branding">Trip Planner</div>
 
       <div className="nav">
         <Link

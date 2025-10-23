@@ -35,3 +35,16 @@ body.dark-mode .nav-link.active {
 body.dark-mode .branding {
   color: #ffffff;
 }
+
+/* Responsive typography scaling */
+@media (max-width: 740px) {
+  html {
+    font-size: 14px; /* Slightly smaller on mobile */
+  }
+}
+
+@media (min-width: 1920px) {
+  html {
+    font-size: 18px; /* Slightly larger on large desktop */
+  }
+}
