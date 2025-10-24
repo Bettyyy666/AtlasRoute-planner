@@ -12,6 +12,10 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "../firebase/firebaseConfig";
 import { toast } from "react-toastify";
 import "./Planner.css";
+import PinFolderPanel from "../features/PinFolder/PinFolderPanel";
+import PinFolderButton from "../features/PinFolder/PinFolderButton";
+import { Pin } from "../types/pinTypes";
+import PinFolderService from "../features/PinFolder/PinFolderService";
 
 interface PlannerProps {
   arrivalDate: Date;
@@ -57,13 +61,35 @@ export const Planner: React.FC<PlannerProps> = ({
   const [highlightMode, setHighlightMode] = useState<
     "none" | "weather" | "redlining"
   >(isSimpleMode ? "none" : "none");
+  
+  // Pin folder state
+  const [pins, setPins] = useState<Pin[]>([]);
+  const [isPinFolderVisible, setIsPinFolderVisible] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
+      
+      // Load pins when user is authenticated
+      if (firebaseUser) {
+        loadUserPins(firebaseUser.uid);
+      } else {
+        setPins([]);
+      }
     });
     return unsubscribe;
   }, []);
+  
+  // Load user pins from the backend
+  const loadUserPins = async (userId: string) => {
+    try {
+      const userPins = await PinFolderService.getUserPins(userId);
+      setPins(userPins);
+    } catch (error) {
+      console.error("Error loading pins:", error);
+      toast.error("Failed to load pins");
+    }
+  };
 
   const handleRemoveActivity = (date: string, id: string) => {
     console.log("remove");
@@ -110,7 +136,61 @@ export const Planner: React.FC<PlannerProps> = ({
     setCurrentTripId(tripId);
   };
 
+  // Pin folder handlers
+  const handleAddPinToItinerary = async (pin: Pin) => {
+    if (!user) {
+      toast.error("Please sign in to add pins to your itinerary");
+      return;
+    }
+
+    try {
+      const pinWithDate = await PinFolderService.addPinToItinerary(pin.id, currentDate);
+      
+      if (pinWithDate) {
+        // Convert Pin to DatedActivity
+        const activity: DatedActivity = {
+          id: pin.id,
+          name: pin.name,
+          description: pin.description,
+          duration: pin.duration,
+          lat: pin.lat,
+          lng: pin.lng,
+          date: currentDate
+        };
+        
+        handleSetActivities(activity);
+        toast.success(`Added ${pin.name} to your itinerary`);
+      }
+    } catch (error) {
+      console.error("Error adding pin to itinerary:", error);
+      toast.error("Failed to add pin to itinerary");
+    }
+  };
+
+  const handleRemovePin = async (pinId: string) => {
+    if (!user) {
+      toast.error("Please sign in to manage pins");
+      return;
+    }
+
+    try {
+      const success = await PinFolderService.removePin(user.uid, pinId);
+      if (success) {
+        setPins(pins.filter(pin => pin.id !== pinId));
+        toast.success("Pin removed from your folder");
+      }
+    } catch (error) {
+      console.error("Error removing pin:", error);
+      toast.error("Failed to remove pin");
+    }
+  };
+
+  const togglePinFolder = () => {
+    setIsPinFolderVisible(!isPinFolderVisible);
+  };
+
   const allActivities = Object.values(activitiesByDate).flat();
+  const currentActivities = activitiesByDate[currentDate] || [];
 
   return (
     <section id="planner" className="planner-container">
@@ -148,6 +228,17 @@ export const Planner: React.FC<PlannerProps> = ({
           highlightMode={highlightMode}
         />
       </div>
+
+      {/* Pin Folder Components */}
+      <PinFolderPanel
+        pins={pins}
+        isVisible={isPinFolderVisible}
+        onClose={togglePinFolder}
+        onAddToItinerary={handleAddPinToItinerary}
+        onRemovePin={handleRemovePin}
+        currentActivities={currentActivities}
+      />
+      <PinFolderButton onClick={togglePinFolder} pinCount={pins.length} />
     </section>
   );
 };
