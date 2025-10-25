@@ -65,7 +65,7 @@ body.dark-mode .planner-map {
 
 
 /* Mobile styles - Samsung Galaxy S8+ (360 x 740 px) */
-@media (max-width: 768px) {
+@media (max-width: 768px) and (min-width: 1920px) {
   .planner-container {
     flex-direction: column;
     position: relative;
