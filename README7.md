@@ -325,7 +325,7 @@ Additionally, I made the following improvements:
 
 #### Team members and contributions (include cs logins):
 Yanmi Yu(yyu111): Task B.1, Task D, Supplement
-Rui Zhou(rzhou52): Task A, B.2, Task C, Supplement
+Rui Zhou(rzhou52): Task A, B.2, Task C
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
 
 Claude 3.7/ChatGPT4: explianing code functionality when starting, idea inspriation, Task A-D and supplement, generate a set of example code for keyboard, generate example code for firebase integration, syntax check, debug logic, comments. 
@@ -347,8 +347,8 @@ Zihan Wang(zwang685): task 2.3, task 3
 Coprogram: task 4, supplemental challenge
 
 ##### Sprint 7:
-Yanmi Yu (yyu111):
-Rui Zhou(rzhou52): 
+Yanmi Yu(yyu111): Task B.1, Task D, Supplement
+Rui Zhou(rzhou52): Task A, B.2, Task C
 
 #### Total estimated time it took to complete project:
 #### Link to GitHub Repo:  

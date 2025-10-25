@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a geospatial travel planning application with a React/TypeScript frontend and Node.js/Express backend. The system integrates FBI crime data, Census demographics, weather information, transit data, and historical redlining data to help users plan trips with comprehensive location-based insights.
+This is a geospatial travel planning application with a React/TypeScript frontend and Node.js/Express backend. The system integrates FBI crime data, Census demographics, weather information, transit data, and historical redlining data to help users plan trips with comprehensive location-based insights. Users can also attach written reviews to pin locations, view them as pop-ups on the map, and edit or delete their own reviews.
 
 ## Development Commands
 
@@ -96,13 +96,21 @@ backend/src/
 ├── acs/                       # Census ACS data proxy
 ├── red-linning/               # Historical redlining data filtering and analysis
 ├── geographic-boundaries/     # State/county boundary lookups
-├── firebase/                  # Trip persistence with Firestore
+├── firebase/                  # Trip persistence, pin folders, and review management
+│   ├── firebasesetup.ts       # Firebase configuration
+│   ├── pinSchema.ts           # Schema for pin data validation
+│   ├── registerPinFolderHandlers.ts # Pin folder API endpoints
+│   ├── registerReviewHandlers.ts    # Review API endpoints
+│   ├── registerSaveTripHandler.ts   # Trip saving endpoints
+│   ├── reviewSchema.ts        # Schema for review data validation
+│   └── tripSchema.ts          # Schema for trip data validation
 ├── CSV-parser/                # Secure CSV parsing with path traversal prevention
 ├── initial-loc-parser/        # Initial location data parsing
 ├── SupplementalChallenge3/    # Security threat handling (rate limiting)
 ├── SupplementalChallenge4/    # Transit data integration
 ├── voronoi-diagram-generator/ # Voronoi spatial partitioning
 ├── middleware/                # Authentication middleware
+│   └── authMiddleware.ts      # User authentication handling
 ├── utils/                     # Utility functions
 └── tests/                     # Unit and integration tests
 ```
@@ -167,6 +175,13 @@ frontend/src/
 │   │   ├── PinFolderButton.tsx   # Toggle button for pin folder panel
 │   │   ├── PinFolderService.ts   # API services for pin management
 │   │   └── PinCard.tsx           # Individual pin display component
+│   ├── Reviews/               # Pin review functionality
+│   │   ├── ReviewForm.tsx        # Form for adding/editing reviews
+│   │   ├── ReviewList.tsx        # List of reviews for a pin
+│   │   ├── ReviewCount.tsx       # Review count display component
+│   │   ├── MapReviewPopup.tsx    # Review popup for map pins
+│   │   ├── ReviewService.ts      # API services for review management
+│   │   └── Reviews.css           # Styling for review components
 │   └── DataQuery/            # Census and FBI data query interface
 ├── components/
 │   ├── Button/               # Reusable button components
@@ -181,9 +196,16 @@ frontend/src/
 ├── firebase/
 │   └── firebaseConfig.ts     # Firebase configuration
 ├── types/
-│   └── geographicBoundaries.ts # Type definitions
+│   ├── geographicBoundaries.ts # Type definitions
+│   └── reviewTypes.ts        # Review interface definitions
 └── assets/
     └── beach-scene.png       # Static assets
+
+├── services/
+│   ├── ReviewService.ts      # API services for review management
+│   ├── PinService.ts         # API services for pin management
+│   ├── TripService.ts        # API services for trip management
+│   └── WeatherService.ts     # Weather data fetching
 ```
 
 **Backend Communication**:
@@ -292,6 +314,10 @@ VITE_API_BASE_URL=http://localhost:3001
 | `/pins/:userId/:pinId` | DELETE | Remove a specific pin from a user's folder |
 | `/pins/:userId/:pinId/everywhere` | DELETE | Remove a pin from both the user's folder and all trips |
 | `/pins/:pinId/addToItinerary` | PUT | Prepare a pin to be added to an itinerary |
+| `/api/reviews` | POST | Create a new review for a pin |
+| `/api/reviews/:pinId` | GET | Get all reviews for a specific pin |
+| `/api/reviews/:reviewId` | PUT | Update a review (requires user to be the owner) |
+| `/api/reviews/:reviewId` | DELETE | Delete a review (requires user to be the owner) |
 
 ## Common Development Workflows
 

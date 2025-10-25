@@ -14,8 +14,13 @@ import type {
 import { weatherDescriptionColors } from "./WeatherColorCode";
 import { useSimpleMode } from "../../contexts/SimpleModeContext";
 import { GeographicBoundariesResponse, GeographicFeature } from "../../types/geographicBoundaries";
+import { MapReviewPopup } from "../Reviews/MapReviewPopup";
+import ReactDOM from "react-dom/client";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
+
+// Store React roots for popups to avoid creating multiple roots
+const popupRoots = new Map<string, ReactDOM.Root>();
 
 const WEATHER_LAYER_ID = "weather-voronoi";
 const REDLINING_LAYER_ID = "redlining-layer";
@@ -72,10 +77,81 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
     }
 
     markers.forEach((markerData) => {
+      // Create a custom popup element
+      const popupEl = document.createElement('div');
+      
+      // Add pin name
+      const nameEl = document.createElement('h4');
+      nameEl.textContent = markerData.name ?? "Unnamed Location";
+      nameEl.style.margin = "0 0 5px 0";
+      popupEl.appendChild(nameEl);
+      
+      // Add description if available
+      if (markerData.description) {
+        const descEl = document.createElement('p');
+        descEl.textContent = markerData.description;
+        descEl.style.margin = "0 0 8px 0";
+        descEl.style.fontSize = "12px";
+        popupEl.appendChild(descEl);
+      }
+      
+      // Add duration if available
+      if (markerData.duration) {
+        const durationEl = document.createElement('div');
+        durationEl.textContent = `Duration: ${markerData.duration} min`;
+        durationEl.style.fontSize = "12px";
+        durationEl.style.marginBottom = "8px";
+        popupEl.appendChild(durationEl);
+      }
+      
+      // Create container for reviews
+      const reviewsContainer = document.createElement('div');
+      reviewsContainer.id = `reviews-${markerData.id}`;
+      popupEl.appendChild(reviewsContainer);
+      
+      // Create the popup
+      const popup = new mapboxgl.Popup({
+        offset: 25,
+        closeButton: true,
+        closeOnClick: false,
+        maxWidth: '300px'
+      }).setDOMContent(popupEl);
+      
+      // Create and add the marker
       const marker = new mapboxgl.Marker()
         .setLngLat([markerData.lng, markerData.lat])
-        .setPopup(new mapboxgl.Popup().setText(markerData.name ?? ""))
+        .setPopup(popup)
         .addTo(mapInstance);
+      
+      // When popup is opened, render the reviews component
+      popup.on('open', () => {
+        const container = document.getElementById(`reviews-${markerData.id}`);
+        if (container && markerData.id) {
+          // Check if we already have a root for this container
+          let root = popupRoots.get(markerData.id);
+          
+          // If no root exists, create one and store it
+          if (!root) {
+            root = ReactDOM.createRoot(container);
+            popupRoots.set(markerData.id, root);
+          }
+          
+          // Use the existing or new root to render
+          root.render(<MapReviewPopup pinId={markerData.id} />);
+        }
+      });
+
+      // Clean up when popup is closed to prevent memory leaks
+      popup.on('close', () => {
+        // Unmount the React component properly
+        if (markerData.id && popupRoots.has(markerData.id)) {
+          const root = popupRoots.get(markerData.id);
+          if (root) {
+            // Unmount by rendering null
+            root.render(null);
+          }
+        }
+      });
 
       markerRefs.current.push(marker);
     });

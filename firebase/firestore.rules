@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Base rules
+    match /{document=**} {
+      allow read, write: if false; // Default deny all
+    }
+    
+    // Trip rules
+    match /trips/{tripId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Pin folder rules
+    match /pins/{pinFolderId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Review rules
+    match /reviews/{reviewId} {
+      // Anyone can read reviews
+      allow read: if true;
+      
+      // Must be authenticated to create a review
+      allow create: if request.auth != null && 
+                     request.auth.uid == request.resource.data.userId;
+      
+      // Only the review creator can update or delete their reviews
+      allow update, delete: if request.auth != null && 
+                             request.auth.uid == resource.data.userId;
+    }
+  }
+}

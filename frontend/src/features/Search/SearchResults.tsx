@@ -119,7 +119,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onSelect }) => {
               className={`save-status-indicator ${savedPins[item.id] ? 'saved' : ''}`}
               aria-label={`${savedPins[item.id] ? 'Saved' : 'Not saved'} ${item.name}`}
             >
-              {savedPins[item.id] ? '📌 Saved' : 'To Save'}
+              {savedPins[item.id] ? '📌 Saved in Pin Folder' : 'To Save'}
             </div>
           </Card>
         </div>

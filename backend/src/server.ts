@@ -13,6 +13,7 @@ import { routeThroughStops } from "./street-graph/multiStopAStar.js";
 // import { registerSaveTripHandler } from "./firebase/registerSaveTripHandler.js"; 
 import { registerSaveTripHandler } from "./firebase/registerSaveTripHandler-SECURE.js";
 import { registerPinFolderHandlers } from "./firebase/registerPinFolderHandlers.js";
+import { registerReviewHandlers } from "./firebase/registerReviewHandlers.js";
 import { registerGetCSVHandler, CSVParserFunction } from "./CSV-parser/csvParserHandler.js";
 import { registerACSProxyHandler, StateFIPSFetcher, ACSDataFetcher, getStateFIPS, fetchACSData } from "./acs/acsProxyHandler.js";
 import { registerFBIQueryHandler, registerFBIStaffQueryHandler, fetchFBIData, loadAPIKey, getStateFIPS as getFBIStateFIPS, getCountyFIPS, getPlaceFIPS, mockAPIKeyLoader, mockFBIDataFetcher} from "./fbi-query/fbiQueryHandler.js";
@@ -92,6 +93,7 @@ export class ServerApp {
     registerFindPathHandler(this.app, routeThroughStops);
     registerSaveTripHandler(this.app);
     registerPinFolderHandlers(this.app);
+    registerReviewHandlers(this.app);
     registerACSProxyHandler(this.app, this.stateFIPSFetcher, this.acsDataFetcher); // Using injected dependencies
     registerGetCSVHandler(this.app, this.csvParser, this.fileExistsFn); // Using injected dependencies
     registerFBIQueryHandler(this.app, this.stateFIPSFetcher, getCountyFIPS, getPlaceFIPS, fetchFBIData, loadAPIKey); // Register FBI query handler
