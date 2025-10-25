@@ -213,10 +213,87 @@ To prevent memory issues with large maps:
 
 
 ### Task D: Communicating Concerns
-#### Step 1
-#### Step 2
-#### Step 3
-#### Step 4
+
+#### Step 1: Concerns Summary
+
+##### 1. Data Use Concerns
+- **Violation of FBI Data Usage Guidelines**: The FBI's Uniform Crime Reporting (UCR) Program explicitly prohibits using arrest data to rank or compare geographic areas. The FBI warns that such comparisons "provide no insight into the numerous variables that shape crime in a particular community" and "often create misleading perceptions that adversely affect communities and their residents."
+- **Potential Consequences**:
+  - API Access Loss: The FBI could revoke our access if they detect misuse
+  - Legal Liability: Users might make harmful or discriminatory decisions based on misleading visualizations that could lead to legal consequences.
+  - Reputational Damage: Experts could publicly criticize our misuse of official data
+
+##### 2. Metric Choice Concerns
+- **Statistically Invalid Safety Metric**: The proposed formula—arrests divided by population—is not a valid measure of safety. Arrests reflect policing activity, not actual crime rates or personal risk, meaning it could show corelationship but not causation. 
+- **Confounding Factors**:
+  - Reporting Inconsistency: UCR participation is voluntary and uneven; missing data falsely appear as "zero arrests"
+  - Population Mismatch: Tourist destinations and college towns have transient populations not captured in census data
+  - Jurisdictional Overlap: City, county, and federal agencies report differently, often across inconsistent boundaries
+  - Bias and Context: Enforcement priorities and systemic bias can inflate or suppress arrest counts independently of crime
+
+##### User Interface Concerns
+- **Misleading Visualization**: The current approach could lead to labeling well-policed urban areas as "dangerous" while showing under-resourced rural areas as "safe"
+- **Potential for Digital Redlining**: Such distortions could perpetuate digital redlining, harm community reputations, and mislead users into discriminatory or unsafe choices
+
+#### Step 2: Alternative Metrics
+
+Instead of using arrest data as a proxy for safety, we could consider the following alternative metrics:
+
+1. **Community-Reported Perception Data**
+   - **Description**: Survey data from residents about their perception of safety in their neighborhoods, colleges, or tourist destinations(But this requires a large amount of data collection and analysis for each area)
+   - **Implementation**: Partner with organizations that conduct regular community surveys or implement our own lightweight survey system
+   - **Advantage**: Captures lived experience rather than enforcement statistics, which can be more representative of community concerns
+
+2. **Multi-Factor Safety Index**
+   - **Description**: A composite score combining multiple data sources (street lighting, emergency response times, walkability scores, etc.)
+   - **Implementation**: Create a weighted algorithm that incorporates various public datasets with transparent methodology
+   - **Advantage**: Provides a more holistic view of factors that contribute to safety
+
+3. **Contextual Safety Information**
+   - **Description**: Qualitative information about an area's safety characteristics without numerical ranking(But this requires a large amount of data collection and analysis for each area as well)
+   - **Implementation**: Curate information about area-specific safety considerations (e.g., "busy tourist area with pickpocketing concerns" or "residential area with school zones")
+   - **Advantage**: Avoids misleading quantification while still providing useful information
+
+4. **User-Generated Safety Tips**
+   - **Description**: Community-sourced information about safety considerations for specific locations, which could be something like yelp reviews or local forums. We can build a online community for each area/tourist destination.
+   - **Implementation**: Allow verified users to submit location-specific safety tips that are moderated and displayed contextually
+   - **Advantage**: Leverages local knowledge while avoiding official "safety ratings"
+
+#### Step 3: UI Design Considerations
+
+To avoid miscommunication with users regarding safety information, our UI design should prioritize several key principles. First, we should incorporate educational context throughout the interface by including clear explanations about the limitations of safety data, providing tooltips or information panels that explain what factors are (and aren't) included in any safety-related information, and adding disclaimers about the proper interpretation of the data. Second, we must avoid simplistic visual encoding by removing color-coding that suggests binary safe/unsafe distinctions (e.g., red/green), replacing simplistic "safety scores" with more nuanced information displays, and using design patterns that communicate complexity rather than certainty.
+
+Additionally, the interface should provide multiple perspectives by showing different types of contextual information side-by-side rather than a single safety metric, allowing users to toggle between different information layers to understand various aspects of an area, and including timestamps and source information for all data to indicate recency and reliability. Finally, we should emphasize user control and transparency by allowing users to customize what safety-related information they see, providing clear attribution for all data sources, and including links to methodology explanations for any derived metrics. These design considerations would help users understand the nuanced nature of safety information and avoid drawing potentially harmful conclusions from oversimplified data.
+
+#### Step 4: Email Draft
+
+```
+Subject: Concerns and Alternatives for the Safety Visualization Feature
+
+Dear Project Manager,
+
+I'm writing regarding the requested feature to visualize "safety" using FBI arrest data divided by population. After careful technical and ethical review, our team has identified several critical concerns with this approach:
+
+1. **Violation of FBI Data Usage Guidelines**: The FBI explicitly prohibits using UCR arrest data to rank or compare geographic areas. Implementing this feature as requested could jeopardize our API access and create legal liability.
+
+2. **Statistical Invalidity**: Arrest rates primarily reflect policing activity and resource allocation, not actual safety. Factors like reporting inconsistency, population fluctuations, and jurisdictional differences make geographic comparisons misleading.
+
+3. **Potential Harm**: This visualization could inadvertently perpetuate biases, harm community reputations, and mislead users into making discriminatory or unsafe choices.
+
+We propose the following alternatives that would better serve our users while avoiding these issues:
+
+- Implement a multi-factor safety index that incorporates diverse public datasets (street lighting, emergency response times, walkability)
+- Provide contextual safety information without numerical ranking
+- Design UI elements that communicate nuance rather than simplistic "safe/unsafe" distinctions
+- Include clear educational context about data limitations
+
+Our team can prepare a detailed proposal with mockups for these alternatives within one week. We believe these approaches would provide more value to users while aligning with ethical data practices.
+
+Could we schedule a brief meeting to discuss these concerns and alternative approaches before proceeding with implementation?
+
+Best regards,
+Yanmi Yu & Rui Zhou
+```
 
 ### Design Choices
 
