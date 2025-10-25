@@ -126,12 +126,12 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
   const [highlightFocused, setHighlightFocused] = useState(false);
   const [selectedHighlightIndex, setSelectedHighlightIndex] = useState(0);
   const [announcement, setAnnouncement] = useState("");
-  
+
   // Highlight options array for screen reader announcements
   const highlightOptions = [
     { value: "none", label: "None" },
     { value: "weather", label: "Weather" },
-    { value: "redlining", label: "Red Lining" }
+    { value: "redlining", label: "Red Lining" },
   ];
 
   const sensors = useSensors(useSensor(PointerSensor));
@@ -141,32 +141,34 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
         switch (e.key) {
-          case '1':
+          case "1":
             e.preventDefault();
-            onHighlightModeChange('none');
+            onHighlightModeChange("none");
             break;
-          case '2':
+          case "2":
             e.preventDefault();
-            onHighlightModeChange('weather');
+            onHighlightModeChange("weather");
             break;
-          case '3':
+          case "3":
             e.preventDefault();
-            onHighlightModeChange('redlining');
+            onHighlightModeChange("redlining");
             break;
-          case 'b':
-          case 'B':
+          case "b":
+          case "B":
             e.preventDefault();
             // Trigger Best Route button click
             alert(
               "Forgot to add this so now you have to add it as a sprint <3 -Roberto"
             );
             break;
-          case 's':
-          case 'S':
+          case "s":
+          case "S":
             e.preventDefault();
             // Trigger Save Trip button click - we'll need to call the save function
             // For now, we'll simulate the button click
-            const saveButton = document.querySelector('.bg-blue-500') as HTMLButtonElement;
+            const saveButton = document.querySelector(
+              ".bg-blue-500"
+            ) as HTMLButtonElement;
             if (saveButton) {
               saveButton.click();
             }
@@ -175,22 +177,30 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onHighlightModeChange]);
 
   // Update selected highlight index when highlightMode changes
   useEffect(() => {
-    const index = highlightOptions.findIndex(option => option.value === highlightMode);
+    const index = highlightOptions.findIndex(
+      (option) => option.value === highlightMode
+    );
     setSelectedHighlightIndex(index >= 0 ? index : 0);
   }, [highlightMode, highlightOptions]);
 
   // Update announcement for screen reader
   useEffect(() => {
     if (highlightFocused && selectedHighlightIndex >= 0) {
-      setAnnouncement(`${highlightOptions[selectedHighlightIndex].label}, option ${selectedHighlightIndex + 1} of ${highlightOptions.length} - Press Enter to select`);
+      setAnnouncement(
+        `${highlightOptions[selectedHighlightIndex].label}, option ${
+          selectedHighlightIndex + 1
+        } of ${highlightOptions.length} - Press Enter to select`
+      );
     } else if (!highlightFocused && selectedHighlightIndex >= 0) {
-      setAnnouncement(`${highlightOptions[selectedHighlightIndex].label} selected`);
+      setAnnouncement(
+        `${highlightOptions[selectedHighlightIndex].label} selected`
+      );
     } else {
       setAnnouncement("");
     }
@@ -239,17 +249,17 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
       <hr />
       <div className="highlight-dropdown">
         <label htmlFor="highlight-select">Highlight:</label>
-        
+
         {/* Live region for screen reader announcements */}
-        <div 
-          id="highlight-status" 
-          aria-live="polite" 
-          aria-atomic="true" 
+        <div
+          id="highlight-status"
+          aria-live="polite"
+          aria-atomic="true"
           className="sr-only"
         >
           {announcement}
         </div>
-        
+
         <select
           id="highlight-select"
           value={highlightMode}
@@ -265,7 +275,9 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
           <option value="redlining">Red Lining</option>
         </select>
         {document.body.classList.contains("simple-mode") && (
-          <small style={{ display: "block", marginTop: "0.5rem", color: "#7f8c8d" }}>
+          <small
+            style={{ display: "block", marginTop: "0.5rem", color: "#7f8c8d" }}
+          >
             Overlays disabled in Simple Mode
           </small>
         )}

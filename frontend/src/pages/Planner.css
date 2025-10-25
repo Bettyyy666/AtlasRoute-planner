@@ -61,3 +61,33 @@ body.dark-mode .planner-sidebar {
 body.dark-mode .planner-map {
   background: #1a1a1a;
 }
+
+
+
+/* Mobile styles - Samsung Galaxy S8+ (360 x 740 px) */
+@media (max-width: 768px) {
+  .planner-container {
+    flex-direction: column;
+    position: relative;
+    /* Allow the whole page to scroll on small screens so the itinerary can
+       be full viewport height and users can scroll down to reach the map
+       and its search bar below. */
+    height: auto;
+    min-height: 100vh;
+    min-width: 100vw;
+    overflow: visible;
+  }
+
+  .planner-map {
+    min-width: 100vw;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .map-container {
+    min-width: 100vw;
+    min-height: 100vh;
+    overflow: visible;
+  }
+}
+
