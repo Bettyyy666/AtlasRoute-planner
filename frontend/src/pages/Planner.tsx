@@ -229,9 +229,8 @@ export const Planner: React.FC<PlannerProps> = ({
           highlightMode={highlightMode}
         />
         </div>
-      </div>
-
-      {/* Pin Folder Components */}
+        {/* Pin Folder Components */}
+      <div className="pin-folder-container">
       <PinFolderPanel
         pins={pins}
         isVisible={isPinFolderVisible}
@@ -241,6 +240,8 @@ export const Planner: React.FC<PlannerProps> = ({
         currentActivities={currentActivities}
       />
       <PinFolderButton onClick={togglePinFolder} pinCount={pins.length} />
+      </div>
+      </div>
     </section>
   );
 };

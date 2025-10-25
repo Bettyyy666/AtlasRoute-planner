@@ -258,6 +258,15 @@ body.dark-mode .canvas-wrapper {
   background: #0f3460;
 }
 
+/* Desktop styles - 1920 x 1080 px */
+@media (min-width: 1920px) {
+  .home-container{
+    overflow: visible;
+    min-width: 100vw;
+
+
+  }
+}
 
 
 

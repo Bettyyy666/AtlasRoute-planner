@@ -1,7 +1,8 @@
 .planner-container {
   display: flex;
   height: 100vh;
-  overflow: hidden;
+  /* allow scrolling when content doesn't fit desktop/mobile viewports */
+  overflow: auto;
   font-family: "Inter", sans-serif;
 }
 
@@ -23,6 +24,13 @@
   flex: 1;
   position: relative;
   z-index: 1;
+}
+
+/* Fix for flex children so their internal scrolling works correctly on
+   desktop (e.g. 1920x1080) and smaller viewports */
+.planner-map,
+.itinerary-wrapper {
+  min-height: 0;
 }
 
 .mapboxgl-ctrl-top-right {
@@ -65,7 +73,7 @@ body.dark-mode .planner-map {
 
 
 /* Mobile styles - Samsung Galaxy S8+ (360 x 740 px) */
-@media (max-width: 768px) and (min-width: 1920px) {
+@media (max-width: 768px) {
   .planner-container {
     flex-direction: column;
     position: relative;

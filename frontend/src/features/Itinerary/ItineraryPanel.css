@@ -6,7 +6,11 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 340px;
-  height: 100vh;
+  /* Allow the panel to size naturally but never exceed the viewport height.
+     Use internal scrolling when content overflows. This is more flexible
+     than forcing a fixed 100vh which can cause layout issues on desktop. */
+  height: auto;
+  max-height: 100vh;
   box-sizing: border-box;
   overflow-y: auto;
   transition: all 0.3s ease;
