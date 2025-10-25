@@ -114,22 +114,22 @@ export const Planner: React.FC<PlannerProps> = ({
 
   return (
     <section id="planner" className="planner-container">
-      <ItineraryPanel
-        arrivalDate={arrivalDate}
-        departureDate={departureDate}
-        activitiesByDate={activitiesByDate}
-        onRemoveActivity={handleRemoveActivity}
-        onReorderActivities={handleReorderActivities}
-        onDateChange={setCurrentDate}
-        currentDate={currentDate}
-        highlightMode={highlightMode}
-        onHighlightModeChange={setHighlightMode}
-        destination={location}
-        userId={user?.uid || null}
-        currentTripId={currentTripId}
-        onLoadTrip={handleLoadTrip}
-        onTripSaved={handleTripSaved}
-      />
+        <ItineraryPanel
+          arrivalDate={arrivalDate}
+          departureDate={departureDate}
+          activitiesByDate={activitiesByDate}
+          onRemoveActivity={handleRemoveActivity}
+          onReorderActivities={handleReorderActivities}
+          onDateChange={setCurrentDate}
+          currentDate={currentDate}
+          highlightMode={highlightMode}
+          onHighlightModeChange={setHighlightMode}
+          destination={location}
+          userId={user?.uid || null}
+          currentTripId={currentTripId}
+          onLoadTrip={handleLoadTrip}
+          onTripSaved={handleTripSaved}
+        />
 
       <div className="planner-map">
         <div className="map-search-bar">
@@ -141,12 +141,14 @@ export const Planner: React.FC<PlannerProps> = ({
             date={currentDate}
           />
         </div>
+        <div className="map-container">
         <MapView
           markers={activitiesByDate[currentDate] || []}
           lat={location.lat}
           lng={location.lng}
           highlightMode={highlightMode}
         />
+        </div>
       </div>
     </section>
   );
