@@ -145,9 +145,12 @@ export function registerPinFolderHandlers(app: Express) {
    */
   app.post("/pins/sync/:userId", async (req: Request, res: Response) => {
     try {
+      console.log("=== PIN SYNC STARTED ===");
       const { userId } = req.params;
+      console.log(`Syncing pins for user: ${userId}`);
 
       if (!userId) {
+        console.log("Error: User ID is required");
         return res.status(400).json({ error: "User ID is required" });
       }
 
@@ -166,45 +169,100 @@ export function registerPinFolderHandlers(app: Express) {
         .where("userId", "==", userId)
         .get();
 
+      console.log(`Found ${tripsQuery.size} trips for user ${userId}`);
+
       if (tripsQuery.empty) {
+        console.log("No trips found, clearing pin folder");
+        // If no trips exist, we should clear the pin folder or create an empty one
+        const pinFolderQuery = await firestore
+          .collection("pins")
+          .where("userId", "==", userId)
+          .limit(1)
+          .get();
+          
+        if (!pinFolderQuery.empty) {
+          // Clear pins if the folder exists
+          const pinFolderDoc = pinFolderQuery.docs[0];
+          await firestore.collection("pins").doc(pinFolderDoc.id).update({
+            pins: [],
+            updatedAt: new Date().toISOString()
+          });
+          console.log("Pin folder cleared - all pins removed");
+        }
+        
         return res.status(200).json({
           success: true,
-          message: "No trips found for this user."
+          pinsCount: 0,
+          message: "No trips found for this user. Pin folder cleared."
         });
       }
 
-      // Extract all pins from all trips
-      const allPins: any[] = [];
+      // Extract all unique pins from all trips
+      const uniquePins: any[] = [];
       const pinKeys = new Set(); // To track unique pins by name+lat+lng
 
+      // First, collect all activities from all trips
+      const allActivities: any[] = [];
+      
+      console.log("=== COLLECTING ACTIVITIES FROM TRIPS ===");
       tripsQuery.forEach(tripDoc => {
         const tripData = tripDoc.data();
+        console.log(`Processing trip: ${tripData.title} (ID: ${tripDoc.id})`);
         const activities = tripData.activities || {};
+        console.log(`Trip activities structure:`, JSON.stringify(activities));
+        
+        // Log the date keys in the activities object
+        const dateKeys = Object.keys(activities);
+        console.log(`Date keys in activities: ${dateKeys.join(', ')}`);
 
-        // Iterate through all activities in all dates
-        Object.values(activities).forEach((activitiesForDate: any) => {
+        // Iterate through all activities in all dates and collect them
+        Object.keys(activities).forEach(date => {
+          const activitiesForDate = activities[date] || [];
+          console.log(`Date ${date} has ${activitiesForDate.length} activities`);
+          
           activitiesForDate.forEach((activity: any) => {
-            // Create a unique key for this pin based on name and coordinates
-            const pinKey = `${activity.name}_${activity.lat}_${activity.lng}`;
-            
-            // Only add if we haven't seen this pin before
-            if (!pinKeys.has(pinKey)) {
-              pinKeys.add(pinKey);
-              
-              // Convert activity to Pin format
-              allPins.push({
-                id: activity.id,
-                name: activity.name,
-                description: activity.description || "",
-                duration: activity.duration,
-                lat: activity.lat,
-                lng: activity.lng,
-                addedAt: new Date().toISOString()
-              });
+            if (activity && activity.id) { // Ensure activity is valid
+              console.log(`Adding activity: ${activity.name} (ID: ${activity.id})`);
+              allActivities.push(activity);
+            } else {
+              console.log(`Skipping invalid activity:`, activity);
             }
           });
         });
       });
+      
+      console.log(`Total activities collected: ${allActivities.length}`);
+      console.log("All activities:", JSON.stringify(allActivities));
+      
+      // Now process all activities to create unique pins
+      console.log("=== CREATING UNIQUE PINS ===");
+      allActivities.forEach(activity => {
+        // Create a unique key for this pin based on name and coordinates
+        const pinKey = `${activity.name}_${activity.lat}_${activity.lng}`;
+        console.log(`Processing activity: ${activity.name}, key: ${pinKey}`);
+        
+        // Only add if we haven't seen this pin before
+        if (!pinKeys.has(pinKey)) {
+          pinKeys.add(pinKey);
+          console.log(`Adding unique pin: ${activity.name} (ID: ${activity.id})`);
+          
+          // Convert activity to Pin format
+          uniquePins.push({
+            id: activity.id,
+            name: activity.name,
+            description: activity.description || "",
+            duration: activity.duration,
+            lat: activity.lat,
+            lng: activity.lng,
+            addedAt: new Date().toISOString()
+          });
+        } else {
+          console.log(`Skipping duplicate pin: ${activity.name}`);
+        }
+      });
+
+      console.log(`Total unique pins to be saved: ${uniquePins.length}`);
+      console.log("Unique pins:", JSON.stringify(uniquePins.map(pin => ({ id: pin.id, name: pin.name }))));
 
       // Get the user's pin folder or create one if it doesn't exist
       const pinFolderQuery = await firestore
@@ -215,51 +273,41 @@ export function registerPinFolderHandlers(app: Express) {
 
       if (pinFolderQuery.empty) {
         // Create new pin folder with all pins from trips
+        console.log("No pin folder found, creating new one");
         await firestore.collection("pins").add({
           userId,
-          pins: allPins,
+          pins: uniquePins,
           updatedAt: new Date().toISOString(),
           createdAt: new Date()
         });
 
         return res.status(200).json({
           success: true,
-          pinsAdded: allPins.length,
-          message: "Pin folder created and all pins from trips added successfully."
+          pinsAdded: uniquePins.length,
+          message: "Pin folder created with unique pins from all trips."
         });
       } else {
-        // Update existing pin folder
+        // Replace existing pins with the unique set from all trips
+        // This ensures pins deleted from trips are also removed from the pin folder
         const pinFolderDoc = pinFolderQuery.docs[0];
-        const pinFolderData = pinFolderDoc.data();
-        const existingPins = pinFolderData.pins || [];
+        const currentPins = pinFolderDoc.data().pins || [];
         
-        // Find pins that need to be added (not already in the folder)
-        const pinsToAdd = allPins.filter(tripPin => {
-          return !existingPins.some((existingPin: any) => 
-            existingPin.name === tripPin.name && 
-            Math.abs(existingPin.lat - tripPin.lat) < 0.0001 && 
-            Math.abs(existingPin.lng - tripPin.lng) < 0.0001
-          );
-        });
+        console.log(`Current pins in folder: ${currentPins.length}`);
+        console.log("Current pins:", JSON.stringify(currentPins.map((pin: any) => ({ id: pin.id, name: pin.name }))));
+        console.log(`Replacing with ${uniquePins.length} pins from trips`);
         
-        if (pinsToAdd.length === 0) {
-          return res.status(200).json({
-            success: true,
-            pinsAdded: 0,
-            message: "All pins from trips are already in the folder."
-          });
-        }
-        
-        // Add the new pins
+        // Force complete replacement of pins array
         await firestore.collection("pins").doc(pinFolderDoc.id).update({
-          pins: [...existingPins, ...pinsToAdd],
+          pins: uniquePins,
           updatedAt: new Date().toISOString()
         });
-
+        
+        console.log("Pin folder updated successfully");
+        
         return res.status(200).json({
           success: true,
-          pinsAdded: pinsToAdd.length,
-          message: `${pinsToAdd.length} pins synced from trips to folder successfully.`
+          pinsCount: uniquePins.length,
+          message: "Pin folder updated with unique pins from all trips."
         });
       }
     } catch (error) {
@@ -327,6 +375,106 @@ export function registerPinFolderHandlers(app: Express) {
     } catch (error) {
       console.error("Failed to remove pin:", error);
       res.status(500).json({ error: "Server error while removing pin." });
+    }
+  });
+  
+  /**
+   * DELETE /pins/:userId/:pinId/everywhere - Remove a pin from the folder and all trips
+   */
+  app.delete("/pins/:userId/:pinId/everywhere", async (req: Request, res: Response) => {
+    try {
+      const { userId, pinId } = req.params;
+
+      if (!userId || !pinId) {
+        return res.status(400).json({ error: "User ID and Pin ID are required" });
+      }
+
+      // Check if Firebase is configured
+      if (!firestore) {
+        console.warn("Firebase not configured - returning mock response");
+        return res.status(200).json({
+          success: true,
+          message: "Pin removed from everywhere successfully (mock - Firebase not configured)."
+        });
+      }
+
+      // Get the user's pin folder
+      const pinFolderQuery = await firestore
+        .collection("pins")
+        .where("userId", "==", userId)
+        .limit(1)
+        .get();
+
+      if (pinFolderQuery.empty) {
+        return res.status(404).json({
+          error: "Pin folder not found."
+        });
+      }
+
+      const pinFolderDoc = pinFolderQuery.docs[0];
+      const pinFolderData = pinFolderDoc.data();
+      
+      // Filter out the pin to remove from pin folder
+      const existingPins = pinFolderData.pins || [];
+      const updatedPins = existingPins.filter((pin: any) => pin.id !== pinId);
+      
+      // Update the pin folder
+      await firestore.collection("pins").doc(pinFolderDoc.id).update({
+        pins: updatedPins,
+        updatedAt: new Date().toISOString()
+      });
+      
+      // Get all trips for this user
+      const tripsQuery = await firestore
+        .collection("trips")
+        .where("userId", "==", userId)
+        .get();
+      
+      // Update each trip to remove the pin from activities
+      const tripUpdates: Promise<any>[] = [];
+      tripsQuery.forEach(tripDoc => {
+        const tripData = tripDoc.data();
+        let tripModified = false;
+        
+        // Check each date in the trip
+        if (tripData.activities) {
+          Object.keys(tripData.activities).forEach(date => {
+            const activities = tripData.activities[date] || [];
+            const originalLength = activities.length;
+            
+            // Filter out the activity with the matching pinId
+            tripData.activities[date] = activities.filter((activity: any) => activity.id !== pinId);
+            
+            if (tripData.activities[date].length !== originalLength) {
+              tripModified = true;
+            }
+          });
+          
+          // If trip was modified, add to batch updates
+          if (tripModified) {
+            tripUpdates.push(
+              firestore!.collection("trips").doc(tripDoc.id).update({
+                activities: tripData.activities,
+                updatedAt: new Date().toISOString()
+              })
+            );
+          }
+        }
+      });
+      
+      // Execute all trip updates
+      if (tripUpdates.length > 0) {
+        await Promise.all(tripUpdates);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Pin removed from folder and all trips successfully.",
+        tripsUpdated: tripUpdates.length
+      });
+    } catch (error) {
+      console.error("Failed to remove pin from everywhere:", error);
+      res.status(500).json({ error: "Server error while removing pin from everywhere." });
     }
   });
 

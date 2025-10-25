@@ -162,6 +162,7 @@ frontend/src/
 │   ├── Map/                  # Mapbox integration with weather/redlining overlays
 │   ├── Itinerary/            # Drag-and-drop trip planning with @dnd-kit
 │   ├── Filters/              # Comprehensive filter UI (price, weather, amenities)
+│   ├── PinFolder/            # Pin folder for saving and organizing activities
 │   └── DataQuery/            # Census and FBI data query interface
 ├── components/
 │   ├── Button/               # Reusable button components
@@ -281,6 +282,12 @@ VITE_API_BASE_URL=http://localhost:3001
 | `/savePins` | POST | Save trip with full itinerary to Firebase |
 | `/trips/:userId` | GET | Retrieve all saved trips for a user |
 | `/trips/:tripId` | DELETE | Delete a specific trip (requires userId in body) |
+| `/pins/:userId` | GET | Retrieve all pins in a user's folder |
+| `/pins` | POST | Add a new pin to a user's folder |
+| `/pins/sync/:userId` | POST | Sync all pins from user's trips to their pin folder (ensures pins deleted from trips are also removed from pin folder) |
+| `/pins/:userId/:pinId` | DELETE | Remove a specific pin from a user's folder |
+| `/pins/:userId/:pinId/everywhere` | DELETE | Remove a pin from both the user's folder and all trips |
+| `/pins/:pinId/addToItinerary` | PUT | Prepare a pin to be added to an itinerary |
 
 ## Common Development Workflows
 
@@ -412,7 +419,7 @@ This codebase evolved through multiple sprints:
 - **Sprint 4**: Transit data, enhanced error handling, Playwright tests
 - **Sprint 5**: Frontend implementation with accessibility focus, dark/simple modes
 - **Sprint 6**: Travel planner with comprehensive geospatial features
-- **Current Sprint**: 
+- **Current Sprint**: Pin folder feature implementation for saving and organizing activities with firebase
 
 When debugging, check sprint README files:
 - `backend/README3.md`, `backend/README4.md`

@@ -181,13 +181,35 @@ export const PinFolderService = {
       return false;
     }
   },
+  
+  /**
+   * Remove a pin from both the user's folder and all trips
+   */
+  removePinFromEverywhere: async (userId: string, pinId: string): Promise<boolean> => {
+    try {
+      await axios.delete(`${API_BASE_URL}/pins/${userId}/${pinId}/everywhere`);
+      return true;
+    } catch (error) {
+      console.error("Error removing pin from everywhere:", error);
+      return false;
+    }
+  },
 
   /**
    * Add a pin to the current itinerary
    */
   addPinToItinerary: async (pinId: string, date: string): Promise<Pin | null> => {
     try {
-      const response = await axios.put(`${API_BASE_URL}/pins/${pinId}/addToItinerary`, { date });
+      const user = auth.currentUser;
+      if (!user) {
+        console.error("User not authenticated");
+        return null;
+      }
+      
+      const response = await axios.put(`${API_BASE_URL}/pins/${pinId}/addToItinerary`, { 
+        userId: user.uid,
+        date 
+      });
       return response.data.pin;
     } catch (error) {
       console.error("Error adding pin to itinerary:", error);

@@ -34,29 +34,16 @@
   color: #999;
 }
 
-.save-to-folder-btn {
+.save-status-indicator {
   margin-top: 8px;
   padding: 6px 12px;
   background-color: #f1f2f6;
-  border: none;
   border-radius: 4px;
-  cursor: pointer;
   font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: background-color 0.2s;
+  display: inline-block;
 }
 
-.save-to-folder-btn:hover {
-  background-color: #e9ecef;
-}
-
-.save-to-folder-btn.saved {
+.save-status-indicator.saved {
   background-color: #4caf50;
   color: white;
-}
-
-.save-to-folder-btn.saved:hover {
-  background-color: #3d8b40;
 }

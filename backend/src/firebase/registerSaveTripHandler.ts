@@ -72,6 +72,21 @@ export function registerSaveTripHandler(app: Express) {
         console.log(`Created new trip ${tripId} for ${tripData.destination.name}`);
       }
 
+      // Sync pins from all trips to the user's pin folder
+      try {
+        // Make a request to the pin sync endpoint
+        await fetch(`http://localhost:3001/pins/sync/${tripData.userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        console.log(`Pins synced for user ${tripData.userId} after trip ${isUpdate ? 'update' : 'save'}`);
+      } catch (syncError) {
+        // Log the error but don't fail the trip save operation
+        console.error("Failed to sync pins after trip save:", syncError);
+      }
+
       res.status(200).json({
         success: true,
         message: isUpdate ? "Trip updated successfully." : "Trip saved successfully.",

@@ -132,8 +132,24 @@ export const Planner: React.FC<PlannerProps> = ({
     setCurrentDate(firstDate);
   };
 
-  const handleTripSaved = (tripId: string) => {
+  const handleTripSaved = async (tripId: string) => {
     setCurrentTripId(tripId);
+    
+    // Refresh pins after saving/updating a trip
+    if (user) {
+      try {
+        // First sync pins from trips to ensure backend is updated
+        await PinFolderService.syncPinsFromTrips(user.uid);
+        
+        // Then reload pins to update the UI
+        const userPins = await PinFolderService.getUserPins(user.uid);
+        setPins(userPins);
+        
+        console.log("Pin folder refreshed after trip update");
+      } catch (error) {
+        console.error("Error refreshing pins after trip update:", error);
+      }
+    }
   };
 
   // Pin folder handlers
@@ -174,10 +190,33 @@ export const Planner: React.FC<PlannerProps> = ({
     }
 
     try {
-      const success = await PinFolderService.removePin(user.uid, pinId);
+      const success = await PinFolderService.removePinFromEverywhere(user.uid, pinId);
       if (success) {
+        // Update pins state
         setPins(pins.filter(pin => pin.id !== pinId));
-        toast.success("Pin removed from your folder");
+        
+        // Also remove from current activities if present
+        const updatedActivitiesByDate = { ...activitiesByDate };
+        let activityRemoved = false;
+        
+        // Check each date for the activity to remove
+        Object.keys(updatedActivitiesByDate).forEach(date => {
+          const originalLength = updatedActivitiesByDate[date].length;
+          updatedActivitiesByDate[date] = updatedActivitiesByDate[date].filter(
+            activity => activity.id !== pinId
+          );
+          
+          if (updatedActivitiesByDate[date].length !== originalLength) {
+            activityRemoved = true;
+          }
+        });
+        
+        // Update activities state if any were removed
+        if (activityRemoved) {
+          setActivitiesByDate(updatedActivitiesByDate);
+        }
+        
+        toast.success("Pin removed from your folder and all trips");
       }
     } catch (error) {
       console.error("Error removing pin:", error);

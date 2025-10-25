@@ -102,14 +102,31 @@ export default function SaveTripButton({
 
       if (response.data.success) {
         const message = response.data.isUpdate
-          ? "✅ Trip updated successfully!"
-          : "✅ Trip saved successfully!";
+          ? "Trip updated successfully!"
+          : "Trip saved successfully!";
         toast.success(message);
         console.log(
           response.data.isUpdate ? "Trip updated with ID:" : "Trip saved with ID:",
           response.data.tripId
         );
         onTripSaved(response.data.tripId);
+        
+        // Sync pins from all trips to the pin folder
+        try {
+          await axios.post(
+            `http://localhost:3001/pins/sync/${user.uid}`,
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${idToken}`,
+              },
+            }
+          );
+          console.log("Pins synced successfully after saving trip");
+        } catch (syncError) {
+          console.error("Error syncing pins after saving trip:", syncError);
+          // Don't show error to user as this is a background operation
+        }
       } else {
         toast.error("Failed to save trip.");
       }

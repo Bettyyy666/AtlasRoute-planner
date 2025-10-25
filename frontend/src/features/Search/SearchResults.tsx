@@ -115,14 +115,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({ results, onSelect }) => {
           onClick={() => onSelect(item)}
         >
           <Card title={item.name} description={item.description}>
-            <button 
-              className={`save-to-folder-btn ${savedPins[item.id] ? 'saved' : ''}`}
-              onClick={(e) => handleSaveToFolder(e, item)}
-              aria-label={`${savedPins[item.id] ? 'Saved' : 'Save'} ${item.name} to pin folder`}
-              disabled={isLoading}
+            <div 
+              className={`save-status-indicator ${savedPins[item.id] ? 'saved' : ''}`}
+              aria-label={`${savedPins[item.id] ? 'Saved' : 'Not saved'} ${item.name}`}
             >
               {savedPins[item.id] ? '📌 Saved' : 'To Save'}
-            </button>
+            </div>
           </Card>
         </div>
       ))}
