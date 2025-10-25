@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { reviewService } from "../../features/Reviews/ReviewService";
 import { auth } from "../../firebase/firebaseConfig";
-import { ReviewForm } from "./ReviewForm";
+import { ReviewForm } from "../../features/Reviews/ReviewForm";
 import "./Reviews.css";
-
 interface MapReviewPopupProps {
   pinId: string;
 }

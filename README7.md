@@ -231,7 +231,7 @@ To prevent memory issues with large maps:
   - Jurisdictional Overlap: City, county, and federal agencies report differently, often across inconsistent boundaries
   - Bias and Context: Enforcement priorities and systemic bias can inflate or suppress arrest counts independently of crime
 
-##### User Interface Concerns
+##### 3. User Interface Concerns
 - **Misleading Visualization**: The current approach could lead to labeling well-policed urban areas as "dangerous" while showing under-resourced rural areas as "safe"
 - **Potential for Digital Redlining**: Such distortions could perpetuate digital redlining, harm community reputations, and mislead users into discriminatory or unsafe choices
 

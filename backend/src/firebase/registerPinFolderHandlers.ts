@@ -296,7 +296,7 @@ export function registerPinFolderHandlers(app: Express) {
         console.log("Current pins:", JSON.stringify(currentPins.map((pin: any) => ({ id: pin.id, name: pin.name }))));
         console.log(`Replacing with ${uniquePins.length} pins from trips`);
         
-        // Force complete replacement of pins array
+        // Force complete replacement of pins array, Replace existing pins with the unique set from all trips
         await firestore.collection("pins").doc(pinFolderDoc.id).update({
           pins: uniquePins,
           updatedAt: new Date().toISOString()
