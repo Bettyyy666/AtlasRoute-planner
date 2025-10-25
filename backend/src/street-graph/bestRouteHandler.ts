@@ -2,6 +2,10 @@ import { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { RoutingAlgorithm } from "../street-graph/graphSchema.js";
 import { handleShortestPathRequest } from "./shortestTwoPointPath.js";
+import { mockRoutingAlgorithm } from "./mockRoutingAlgorithm";
+
+// Use mock algorithm for development
+const USE_MOCK = true;
 
 dotenv.config();
 
@@ -48,10 +52,14 @@ export function registerFindPathHandler(
     try {
       const { points } = req.body;
 
-      // What happens if we have less than 2 points
+      if (!points || points.length < 2) {
+        return res.status(400).json({ error: "At least 2 points are required" });
+      }
 
-      // Delegate pathfinding logic to other function
-      const result = await handleShortestPathRequest(points, algorithm);
+      // Use mock algorithm for development, otherwise use the real one
+      const result = USE_MOCK 
+        ? await mockRoutingAlgorithm(points)
+        : await handleShortestPathRequest(points, algorithm);
 
       // Return the result to the frontend
       res.status(200).json(result);
