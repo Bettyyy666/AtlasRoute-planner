@@ -1,7 +1,4 @@
-import {
-  DutchWindmillsToOceanBeach,
-  CableCartsToKevinChrisPhoPlace,
-} from "./mockPaths";
+import { mockShortPath } from "./mockPaths.js";
 
 /**
  * Mock implementation of the routing algorithm that returns pre-defined paths
@@ -22,12 +19,16 @@ export const mockRoutingAlgorithm = async (
     Math.pow(end.lat - start.lat, 2) + Math.pow(end.lng - start.lng, 2)
   );
 
-  // Return appropriate mock path based on distance
-  // For demo purposes, we're using pre-defined paths from mockPaths.ts
-  const path =
-    Math.random() > 0.5
-      ? DutchWindmillsToOceanBeach
-      : CableCartsToKevinChrisPhoPlace;
+  // Return mock path from mockPaths.ts
+  // For demo purposes, we're using a pre-defined path
+  const path = mockShortPath.map(nodeId => {
+    // Convert node IDs to lat/lng coordinates for demo
+    // In a real implementation, we would look up actual coordinates
+    return {
+      lat: 37.7 + Math.random() * 0.1,
+      lng: -122.4 + Math.random() * 0.1
+    };
+  });
   return {
     path: path,
     distance: distance * 111000,
