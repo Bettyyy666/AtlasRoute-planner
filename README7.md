@@ -326,6 +326,7 @@ Additionally, I made the following improvements:
 #### Team members and contributions (include cs logins):
 Yanmi Yu(yyu111): Task B.1, Task D, Supplement
 Rui Zhou(rzhou52): Task A, B.2, Task C
+Coprogram: Supplement
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
 
 Claude 3.7/ChatGPT4: explianing code functionality when starting, idea inspriation, Task A-D and supplement, generate a set of example code for keyboard, generate example code for firebase integration, syntax check, debug logic, comments. 
@@ -349,9 +350,16 @@ Coprogram: task 4, supplemental challenge
 ##### Sprint 7:
 Yanmi Yu(yyu111): Task B.1, Task D, Supplement
 Rui Zhou(rzhou52): Task A, B.2, Task C
+Coprogram: Supplement
 
 #### Total estimated time it took to complete project:
+20
+
 #### Link to GitHub Repo:  
+https://github.com/cs0320-f25/pins-and-pathfinding-rzhou52-yyu111
+
 #### Link to asynchronous demo:
+https://brown.zoom.us/rec/share/Ya9RObmi3GtxRd8Ei1k1zTT_BzJQ3TgWNdAsEyZch0zi6v8OsdRlF1qssOy7xSMF.pGoVrM8OMOSgRwUo?startTime=1761417373000
+
 
 
