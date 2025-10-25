@@ -22,6 +22,8 @@ const REDLINING_LAYER_ID = "redlining-layer";
 const STATES_LAYER_ID = "states-boundaries";
 const COUNTIES_LAYER_ID = "counties-boundaries";
 
+const ROUTE_LAYER_ID = "route-layer";
+
 type HighlightMode = "none" | "weather" | "redlining";
 
 type Props = {
@@ -61,6 +63,14 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
     markerRefs.current.forEach((marker) => marker.remove());
     markerRefs.current = [];
 
+    // Remove existing route
+    if (mapInstance.getLayer(ROUTE_LAYER_ID)) {
+      mapInstance.removeLayer(ROUTE_LAYER_ID);
+    }
+    if (mapInstance.getSource("route")) {
+      mapInstance.removeSource("route");
+    }
+
     markers.forEach((markerData) => {
       const marker = new mapboxgl.Marker()
         .setLngLat([markerData.lng, markerData.lat])
@@ -69,6 +79,11 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
 
       markerRefs.current.push(marker);
     });
+
+    // If we have 2 or more markers, fetch and display the route
+    if (markers.length >= 2) {
+      fetchAndDisplayRoute(markers);
+    }
 
     // Fetch and display geographic boundaries for each marker
     fetchAndRenderGeographicBoundaries();
@@ -366,6 +381,63 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
       fetchAndRenderRedliningPolygons(false);
     } catch (err) {
       console.error("Error updating tiles or weather overlay:", err);
+    }
+  };
+
+  // Fetch and display route between markers
+  const fetchAndDisplayRoute = async (activities: DatedActivity[]) => {
+    if (!mapInstance || activities.length < 2) return;
+
+    try {
+      const points = activities.map(activity => ({
+        lat: activity.lat,
+        lng: activity.lng
+      }));
+
+      const response = await axios.post('http://localhost:3001/find-path', { points });
+
+      if (response.status === 200 && response.data) {
+        // Create a GeoJSON LineString from the route data
+        const routeGeoJson: FeatureCollection<LineString> = {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: points.map(p => [p.lng, p.lat])
+            }
+          }]
+        };
+
+        // Add the route to the map
+        if (!mapInstance.getSource('route')) {
+          mapInstance.addSource('route', {
+            type: 'geojson',
+            data: routeGeoJson
+          });
+
+          mapInstance.addLayer({
+            id: ROUTE_LAYER_ID,
+            type: 'line',
+            source: 'route',
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#0a84ff',
+              'line-width': 4,
+              'line-opacity': 0.8
+            }
+          });
+        } else {
+          const source = mapInstance.getSource('route') as mapboxgl.GeoJSONSource;
+          source.setData(routeGeoJson);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching route:', error);
     }
   };
 
