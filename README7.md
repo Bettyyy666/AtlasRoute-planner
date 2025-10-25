@@ -224,9 +224,34 @@ To prevent memory issues with large maps:
 #### Tests:
 #### How To…
 
-#### Team members and contributions (include cs logins):
+##### Yanmi Yu
+I implemented the pin removal functionality that deletes pins from both the pin folder and all trips. This enhancement ensures that when a user removes a pin from their collection, it's completely removed from the system - both from the pins folder and from any trips it was added to. The implementation includes:
 
+1. A new frontend service method `removePinFromEverywhere` in PinFolderService
+2. A new backend endpoint `/pins/:userId/:pinId/everywhere` that handles removing pins from both collections
+3. Updated UI logic to immediately reflect pin removal in both the pin folder and itinerary displays
+
+I also fixed the pin synchronization issue where pins deleted from trips weren't being properly removed from the pin folder, and implemented automatic refreshing of the Pin Folder when trips are saved or updated.
+
+Additionally, I made the following improvements:
+
+1. Fixed the "Add to day" button in the Pin Folder by updating the `addPinToItinerary` function to include the user ID in the request body
+2. Converted the "📌 Saved" and "To Save" buttons into non-interactive status indicators to improve user experience
+3. Enhanced the pin synchronization system to ensure the pins collection in Firebase always contains only the unique set of pins from all of a user's saved trips
+4. Modified the `/pins/sync/:userId` endpoint to completely replace existing pins with the unique set from all trips, ensuring pins are properly removed when they're no longer in any trips
+5. Updated the trip save/update functionality to automatically trigger pin synchronization, maintaining data consistency across the application
+
+
+##### Rui Zhou
+
+
+
+#### Team members and contributions (include cs logins):
+Yanmi Yu(yyu111): Task B.1, Task D, Supplement
+Rui Zhou(rzhou52): Task A, B.2, Task C, Supplement
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
+
+Claude 3.7/ChatGPT4: explianing code functionality when starting, idea inspriation, Task A-D and supplement, generate a set of example code for keyboard, generate example code for firebase integration, syntax check, debug logic, comments. 
 
 ##### Previous sprint contributor 
 Sprint 3:
@@ -248,9 +273,8 @@ Coprogram: task 4, supplemental challenge
 Yanmi Yu (yyu111):
 Rui Zhou(rzhou52): 
 
-
 #### Total estimated time it took to complete project:
 #### Link to GitHub Repo:  
-#### Link to asynchronous demo: 
+#### Link to asynchronous demo:
 
 
