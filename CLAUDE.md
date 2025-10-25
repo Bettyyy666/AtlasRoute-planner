@@ -163,6 +163,10 @@ frontend/src/
 │   ├── Itinerary/            # Drag-and-drop trip planning with @dnd-kit
 │   ├── Filters/              # Comprehensive filter UI (price, weather, amenities)
 │   ├── PinFolder/            # Pin folder for saving and organizing activities
+│   │   ├── PinFolderPanel.tsx    # UI for managing saved pins
+│   │   ├── PinFolderButton.tsx   # Toggle button for pin folder panel
+│   │   ├── PinFolderService.ts   # API services for pin management
+│   │   └── PinCard.tsx           # Individual pin display component
 │   └── DataQuery/            # Census and FBI data query interface
 ├── components/
 │   ├── Button/               # Reusable button components
@@ -370,7 +374,6 @@ VITE_API_BASE_URL=http://localhost:3001
 
 ### Current Limitations
 - Simple mode only accessible from landing page - mode controls not available in Planner view
-- Load trips UI not yet implemented (backend endpoints exist, frontend component needed)
 - Screen reader announcements inconsistent across components
 - Filter panel checkboxes have incomplete keyboard support
 
@@ -404,6 +407,20 @@ VITE_API_BASE_URL=http://localhost:3001
 - Ensure focus management for modals/dropdowns
 - Add sr-only text for screen readers where visual-only indicators exist
 
+### Mobile Responsiveness
+- **Target Devices**: Samsung Galaxy S8+ (360 x 740 px) and standard desktop (1,920 x 1,080px)
+- **Core Requirements**:
+  - All core features must remain accessible on mobile devices
+  - Content should be visible without zooming
+  - Interactive elements must be properly sized and adequately spaced
+  - Pages should load efficiently without excessive data consumption
+- **Implementation Approach**:
+  - Use responsive design techniques (CSS media queries, flexbox, grid)
+  - Implement toggles or dropdowns for panels that don't fit on mobile screens
+  - Maintain functionality over aesthetics for mobile views
+  - Test using browser developer tools' device emulation features
+- **Simple Mode**: Enable for bandwidth-constrained mobile users
+
 ## Performance Considerations
 
 - **Tile Loading**: Activities bucketed by tiles reduce full dataset scans
@@ -411,6 +428,29 @@ VITE_API_BASE_URL=http://localhost:3001
 - **Caching**: Weather data cached for 10 minutes via NodeCache
 - **Lazy Loading**: Graph tiles and weather stations loaded on-demand
 - **Simple Mode**: Disables Mapbox interactive map to reduce bandwidth
+- **Mobile Optimization**: Reduced data consumption for mobile users
+
+## Pin Folder Feature
+
+The Pin Folder system allows users to maintain a collection of pins (locations) that may or may not be in an itinerary, enabling experimentation with different trip configurations.
+
+**Key Components**:
+- **Pin Synchronization**: Ensures the pin folder always contains a unique set of pins from all saved trips
+- **Automatic Sync**: Pins are automatically synchronized when trips are saved or updated
+- **Pin Management**: Users can add pins to itineraries or remove them completely
+- **Data Consistency**: Pins removed from all trips are automatically removed from the pin folder
+
+**Implementation Details**:
+- Backend: `backend/src/firebase/registerPinFolderHandlers.ts` - Core pin folder management endpoints
+- Frontend: `frontend/src/features/PinFolder/` - UI components and services for pin interaction
+- Integration: `backend/src/firebase/registerSaveTripHandler.ts` - Automatic pin sync on trip save/update
+
+**User Workflows**:
+1. Save pins from search results to pin folder
+2. View all saved pins in the pin folder panel
+3. Add pins from folder to current day's itinerary
+4. Remove pins from folder (with option to remove from all trips)
+5. Automatic synchronization when trips are modified
 
 ## Sprint History Context
 
@@ -419,7 +459,7 @@ This codebase evolved through multiple sprints:
 - **Sprint 4**: Transit data, enhanced error handling, Playwright tests
 - **Sprint 5**: Frontend implementation with accessibility focus, dark/simple modes
 - **Sprint 6**: Travel planner with comprehensive geospatial features
-- **Current Sprint**: Pin folder feature implementation for saving and organizing activities with firebase
+- **Sprint 7**: Pin folder feature implementation for saving and organizing activities with firebase
 
 When debugging, check sprint README files:
 - `backend/README3.md`, `backend/README4.md`
