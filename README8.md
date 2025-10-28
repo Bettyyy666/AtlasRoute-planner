@@ -63,9 +63,24 @@ Alice Lee works at the city’s Department of Public Health and leads the Active
 
 **Koren Baas**, a 61-year-old managing multiple health conditions, uses the app to keep track of medical appointments. His primary concerns revolve around medical privacy and discrimination. Shared travel pins that reveal regular visits to hospitals or specialized clinics could expose sensitive health information. Such data might be used by insurance companies to infer chronic illness, leading to higher premiums or reduced coverage. Koren also worries about the social stigma associated with certain types of medical treatment—if his travel patterns were made public, others might draw unfair conclusions about his health or personal circumstances.
 
-
-
 #### Part 3: Technical Solutions
+**Data Fields: Inclusion and Exclusion**
+The shared dataset will include only the information necessary for traffic analysis and urban planning while excluding personally identifiable or highly precise details. The included fields will be: (1) *generalized origin and destination areas* represented at the city block or grid level (e.g., a 500-meter radius or Census block centroid) rather than exact coordinates, which supports understanding travel flow patterns without exposing specific addresses; (2) *time windows* expressed as hourly or 15-minute intervals (e.g., “07:00–08:00” instead of “07:43”) to allow peak-hour analysis while preventing the reconstruction of precise routines; (3) *mode of transportation* (walking, biking, driving, or public transit) to support low-carbon and mobility studies; (4) *trip distance and duration* for evaluating commute efficiency and infrastructure accessibility; and (5) *anonymized, session-level user IDs* that cannot be linked to long-term individual histories.
+
+Excluded fields will include exact GPS coordinates and full route trajectories, all personal identifiers such as names, emails, phone numbers, or device IDs, and any persistent identifiers that allow long-term tracking across sessions. This approach maintains the minimum data granularity required for useful analysis while removing elements that could reveal a specific individual’s identity or sensitive locations like homes, schools, or workplaces.
+
+
+**Privacy Preservation and Data Transformations**
+To safeguard user privacy, several technical transformations will be applied before data sharing. Spatial generalization will be implemented through grid-based encoding (e.g., reducing GeoHash precision to level 6) or location perturbation (adding random noise within ±100–200 meters). Sensitive points of interest—such as residences, schools, or medical facilities—will be automatically masked and replaced with the nearest public landmark or neighborhood centroid. Temporal aggregation will convert exact timestamps into coarser hourly or 15-minute windows to obscure exact travel times and reduce the ability to infer daily routines.
+
+Further, differential privacy techniques will introduce small amounts of statistical noise to aggregated outputs (such as heatmaps or flow distributions), ensuring that the inclusion or exclusion of any single user has an insignificant effect on the overall analysis. A k-anonymity constraint (with k ≥ 50) will ensure that no published spatial unit represents fewer than fifty users, preventing isolation of individual travel patterns. Finally, all approved third-party analysts will access the data through a secure sandbox environment, which restricts them from downloading or exporting raw records—only aggregated, privacy-preserving summaries can be generated within the controlled system.
+
+
+**Risks and Limitations**
+Despite these safeguards, some risks remain. From the user perspective, re-identification attacks are still possible if an adversary cross-references the shared data with external information sources such as social media posts or public event records. There is also an inherent trade-off between privacy and utility: excessive spatial or temporal generalization can reduce the precision and usefulness of analyses, while insufficient generalization can increase re-identification risk.
+
+For data users, privacy mechanisms such as differential privacy and spatial masking may slightly reduce accuracy, particularly for fine-grained models of traffic congestion or neighborhood mobility. Moreover, the secure sandbox access model limits data manipulation flexibility and may require additional infrastructure, analyst training, and computational resources. Nonetheless, this design provides a balanced compromise—meeting institutional data needs for transportation and planning insights while meaningfully addressing individual users’ safety and privacy concerns.
+
 
 ### Supplemental Challenge (S_DIST/1340)
 #### Question 1
@@ -86,12 +101,16 @@ Alice Lee works at the city’s Department of Public Health and leads the Active
 #### How To…
 
 #### Team members and contributions (include cs logins):
+Yanmi Yu(yyu111): Task B, Task C
+Rui Zhou(rzhou52): Task A
 
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
 Claude 3.7/ChatGPT4: explianing code functionality when starting, idea inspriation, generate a set of example code, syntax check, debug logic, comments, gramma. 
 
 
 #### Total estimated time it took to complete project:
+
 #### Link to GitHub Repo:
+https://github.com/cs0320-f25/pins-and-pathfinding-rzhou52-yyu111
 
 
