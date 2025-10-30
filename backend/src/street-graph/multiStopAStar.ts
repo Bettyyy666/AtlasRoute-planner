@@ -1,3 +1,4 @@
+import { aStarWithOnDemandTiles } from "./Astar.js";
 export type NodeId = string;
 
 /**
@@ -12,5 +13,45 @@ export type NodeId = string;
  * @returns a full path visiting each stop, as an array of node IDs
  */
 export async function routeThroughStops(nodeIds: NodeId[]): Promise<NodeId[]> {
-  return [];
+  // Handle edge cases
+  if (nodeIds.length === 0) {
+    return [];
+  }
+
+  if (nodeIds.length === 1) {
+    return nodeIds;
+  }
+
+  if (nodeIds.length === 2) {
+    // Just run A* once for two nodes
+    return await aStarWithOnDemandTiles(nodeIds);
+  }
+
+  // For multiple stops, route through each consecutive pair
+  const fullPath: NodeId[] = [];
+
+  for (let i = 0; i < nodeIds.length - 1; i++) {
+    const start = nodeIds[i];
+    const end = nodeIds[i + 1];
+
+    // Find path between this pair
+    const segmentPath = await aStarWithOnDemandTiles([start, end]);
+
+    if (segmentPath.length === 0) {
+      console.warn(`No path found between ${start} and ${end}`);
+      // If we can't find a path to the next stop, return what we have so far
+      return fullPath.length > 0 ? fullPath : [];
+    }
+
+    // Add this segment to the full path
+    if (fullPath.length === 0) {
+      // First segment - add all nodes
+      fullPath.push(...segmentPath);
+    } else {
+      // Subsequent segments - skip the first node (it's the same as the last node of previous segment)
+      fullPath.push(...segmentPath.slice(1));
+    }
+  }
+
+  return fullPath;
 }

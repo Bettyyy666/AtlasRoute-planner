@@ -5,7 +5,7 @@ import { handleShortestPathRequest } from "./shortestTwoPointPath.js";
 import { mockRoutingAlgorithm } from "./mockRoutingAlgorithm.js";
 
 // Use mock algorithm for development
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 dotenv.config();
 
