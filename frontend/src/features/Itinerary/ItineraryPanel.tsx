@@ -20,6 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import SaveTripButton from "./SaveButton";
 import LoadTripsDropdown from "./LoadTripsDropdown";
+import BestRouteButton from "./BestRouteButton";
 export type DatedActivity = SearchResultItem & { date: string };
 export type ActivitiesByDate = Record<string, DatedActivity[]>;
 type HighlightMode = "none" | "weather" | "redlining";
@@ -127,6 +128,54 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
   const [selectedHighlightIndex, setSelectedHighlightIndex] = useState(0);
   const [announcement, setAnnouncement] = useState("");
 
+  /**
+   * Optimizes the order of activities using a greedy nearest-neighbor algorithm
+   */
+  const handleBestRoute = () => {
+    if (currentActivities.length < 2) {
+      console.log("Add at least 2 activities to optimize the route");
+      return;
+    }
+
+    console.log("Calculating best route...");
+
+    try {
+      // Use greedy nearest-neighbor to find a good ordering
+      const optimized: DatedActivity[] = [];
+      const remaining = [...currentActivities];
+
+      // Start with the first activity
+      optimized.push(remaining.shift()!);
+
+      // Greedily add the nearest unvisited activity
+      while (remaining.length > 0) {
+        const current = optimized[optimized.length - 1];
+        let nearestIndex = 0;
+        let minDistance = Infinity;
+
+        for (let i = 0; i < remaining.length; i++) {
+          // Euclidean distance
+          const distance = Math.sqrt(
+            Math.pow(remaining[i].lat - current.lat, 2) +
+              Math.pow(remaining[i].lng - current.lng, 2)
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+            nearestIndex = i;
+          }
+        }
+
+        optimized.push(remaining.splice(nearestIndex, 1)[0]);
+      }
+
+      // Update the activities with the optimized order
+      onReorderActivities(currentDate, optimized);
+      console.log("Route optimized successfully!");
+    } catch (error) {
+      console.error("Failed to optimize route:", error);
+    }
+  };
+
   // Highlight options array for screen reader announcements
   const highlightOptions = [
     { value: "none", label: "None" },
@@ -157,9 +206,7 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
           case "B":
             e.preventDefault();
             // Trigger Best Route button click
-            alert(
-              "Forgot to add this so now you have to add it as a sprint <3 -Roberto"
-            );
+            handleBestRoute();
             break;
           case "s":
           case "S":
@@ -179,7 +226,7 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onHighlightModeChange]);
+  }, [onHighlightModeChange, handleBestRoute]);
 
   // Update selected highlight index when highlightMode changes
   useEffect(() => {
@@ -306,17 +353,13 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
       </DndContext>
 
       <div className="itinerary-buttons">
-        <Button
-          onClick={() => {
-            alert(
-              "Forgot to add this so now you have to add it as a sprint <3 -Roberto"
-            );
-          }}
+        <BestRouteButton
+          onClick={handleBestRoute}
           tabIndex={0}
           aria-label="Best Route - Press Enter to activate"
         >
           Best Route
-        </Button>
+        </BestRouteButton>
         <SaveTripButton
           destination={destination}
           startDate={arrivalDate}

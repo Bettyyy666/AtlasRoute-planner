@@ -1,4 +1,4 @@
-import { aStarWithOnDemandTiles } from "./Astar.js";
+import { aStarWithOnDemandTiles, DistanceMetric } from "./Astar.js";
 export type NodeId = string;
 
 /**
@@ -10,9 +10,13 @@ export type NodeId = string;
  *   reuse it to handle many points.
  *
  * @param nodeIds - ordered list of node IDs to route through
+ * @param distanceMetric - optional custom distance metric for A* heuristic
  * @returns a full path visiting each stop, as an array of node IDs
  */
-export async function routeThroughStops(nodeIds: NodeId[]): Promise<NodeId[]> {
+export async function routeThroughStops(
+  nodeIds: NodeId[],
+  distanceMetric?: DistanceMetric
+): Promise<NodeId[]> {
   // Handle edge cases
   if (nodeIds.length === 0) {
     return [];
@@ -24,7 +28,7 @@ export async function routeThroughStops(nodeIds: NodeId[]): Promise<NodeId[]> {
 
   if (nodeIds.length === 2) {
     // Just run A* once for two nodes
-    return await aStarWithOnDemandTiles(nodeIds);
+    return await aStarWithOnDemandTiles(nodeIds, distanceMetric);
   }
 
   // For multiple stops, route through each consecutive pair
@@ -35,7 +39,7 @@ export async function routeThroughStops(nodeIds: NodeId[]): Promise<NodeId[]> {
     const end = nodeIds[i + 1];
 
     // Find path between this pair
-    const segmentPath = await aStarWithOnDemandTiles([start, end]);
+    const segmentPath = await aStarWithOnDemandTiles([start, end], distanceMetric);
 
     if (segmentPath.length === 0) {
       console.warn(`No path found between ${start} and ${end}`);

@@ -118,6 +118,18 @@ export type PathRequest = z.infer<typeof PathRequestSchema>;
 export type PathResponse = z.infer<typeof PathResponseSchema>;
 
 /**
- * Function signature for routing algorithms (like A* or djikstra).
+ * Type for distance metric functions that can be used as heuristics.
+ * Takes two nodes (each with lat and lon) and returns the distance between them.
  */
-export type RoutingAlgorithm = (nodeIds: string[]) => Promise<string[]>;
+export type DistanceMetric = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) => number;
+
+/**
+ * Function signature for routing algorithms (like A* or djikstra).
+ * Now supports an optional distance metric parameter for custom heuristics.
+ */
+export type RoutingAlgorithm = (nodeIds: string[], distanceMetric?: DistanceMetric) => Promise<string[]>;

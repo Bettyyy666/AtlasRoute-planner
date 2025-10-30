@@ -473,15 +473,22 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
       const response = await axios.post('http://localhost:3001/find-path', { points });
 
       if (response.status === 200 && response.data) {
+        const pathCoordinates = response.data.path;
+        console.log(`Route found with ${pathCoordinates.length} waypoints`);
+
         // Create a GeoJSON LineString from the route data
         const routeGeoJson: FeatureCollection<LineString> = {
           type: 'FeatureCollection',
           features: [{
             type: 'Feature',
-            properties: {},
+            properties: {
+              distance: response.data.distance || 'unknown',
+              waypoints: pathCoordinates.length
+            },
             geometry: {
               type: 'LineString',
-              coordinates: points.map(p => [p.lng, p.lat])
+              // Convert path coordinates to [lng, lat] format required by Mapbox
+              coordinates: pathCoordinates.map((p: { lat: number; lng: number }) => [p.lng, p.lat])
             }
           }]
         };
@@ -511,9 +518,15 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
           const source = mapInstance.getSource('route') as mapboxgl.GeoJSONSource;
           source.setData(routeGeoJson);
         }
+      } else {
+        console.warn('No path data returned from backend');
       }
     } catch (error) {
       console.error('Error fetching route:', error);
+      // Show user-friendly error notification
+      if (axios.isAxiosError(error)) {
+        console.error('Response:', error.response?.data);
+      }
     }
   };
 

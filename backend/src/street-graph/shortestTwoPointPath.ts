@@ -1,4 +1,4 @@
-import { RoutingAlgorithm } from "./graphSchema.js";
+import { RoutingAlgorithm, DistanceMetric } from "./graphSchema.js";
 import { graphCache, TILE_SIZE } from "../globalVariables.js";
 import {
   buildNodeIndex,
@@ -15,17 +15,19 @@ import {
  *
  * @param points - Array of `{lat, lng}` points, first = start, last = goal
  * @param algorithm - A function implementing a routing algorithm (A*, Dijkstra, etc.)
+ * @param distanceMetric - Optional custom distance metric for A* heuristic
  * @returns An object with a `path` array of `{lat, lng}` points to draw on a map.
  *
  *  STUDENT NOTES:
- * - This function doesn’t know how A* works,
+ * - This function doesn't know how A* works,
  *   it just delegates to the `algorithm` you pass in.
  * - Your `algorithm` function should take an array of node IDs (start + goal)
  *   and return an array of node IDs representing the path.
  */
 export async function handleShortestPathRequest(
   points: { lat: number; lng: number }[],
-  algorithm: RoutingAlgorithm
+  algorithm: RoutingAlgorithm,
+  distanceMetric?: DistanceMetric
 ): Promise<{ path: { lat: number; lng: number }[] }> {
   // 1. Ensure tiles for start & goal are loaded into the graph cache
   await ensureStartGoalTiles(points);
@@ -33,8 +35,8 @@ export async function handleShortestPathRequest(
   // 2. Find the nearest graph nodes to the requested points
   const nodes = points.map((p) => findNearestGraphNode(p));
 
-  // 3. Call the routing algorithm (e.g., your A* implementation)
-  const pathIds = await algorithm(nodes as string[]);
+  // 3. Call the routing algorithm (e.g., your A* implementation) with optional distance metric
+  const pathIds = await algorithm(nodes as string[], distanceMetric);
 
   // 4. Build a fast lookup of nodes → coordinates
   const nodeIndex = buildNodeIndex();

@@ -1,7 +1,9 @@
-import { graphCache, TILE_SIZE } from "../globalVariables.js";
-import { buildNodeIndex, haversineDistance, ensureTileLoaded } from "./tileUtils.js";
-import { NodeId, Neighbor } from "./graphSchema.js";
-import { nearEdge } from "./lazyLoader.js";
+import { buildNodeIndex, haversineDistance, euclid } from "./tileUtils.js";
+import { NodeId, DistanceMetric } from "./graphSchema.js";
+import { getNeighbors, getTileKeyForNode, loadNeighborTiles } from "./lazyLoader.js";
+
+// Re-export haversineDistance so callers can use it as a distance metric
+export { haversineDistance };
 
 /**
  * Simple priority queue implementation using a min-heap.
@@ -57,97 +59,17 @@ class PriorityQueue {
   }
 }
 
-/**
- * Get tile key from a node ID by looking it up in the node index.
- */
-function getTileKeyForNode(nodeId: NodeId, nodeIndex: Record<string, { lat: number; lon: number }>): string {
-  const node = nodeIndex[nodeId];
-  if (!node) {
-    throw new Error(`Node ${nodeId} not found in node index`);
-  }
-  const latIdx = Math.floor(node.lat / TILE_SIZE);
-  const lonIdx = Math.floor(node.lon / TILE_SIZE);
-  return `${latIdx},${lonIdx}`;
-}
-
-/**
- * Get neighbors for a node, ensuring tiles are loaded as needed.
- */
-async function getNeighbors(
-  nodeId: NodeId,
-  nodeIndex: Record<string, { lat: number; lon: number }>
-): Promise<Neighbor[]> {
-  const tileKey = getTileKeyForNode(nodeId, nodeIndex);
-
-  // Ensure the tile is loaded
-  if (!graphCache[tileKey]) {
-    await ensureTileLoaded(tileKey);
-  }
-
-  const tile = graphCache[tileKey];
-  if (!tile) {
-    console.warn(`Tile ${tileKey} not available for node ${nodeId}`);
-    return [];
-  }
-
-  const neighbors = tile.neighbors[nodeId] || [];
-
-  // Check if we're near an edge and should load neighbor tiles
-  const node = nodeIndex[nodeId];
-  if (node && nearEdge(node.lat, node.lon, tileKey)) {
-    await loadNeighborTiles(node.lat, node.lon, tileKey);
-  }
-
-  return neighbors;
-}
-
-/**
- * Load neighboring tiles if we're near a tile boundary.
- */
-async function loadNeighborTiles(lat: number, lon: number, currentKey: string): Promise<void> {
-  const [iStr, jStr] = currentKey.split(",");
-  const i = parseInt(iStr, 10);
-  const j = parseInt(jStr, 10);
-
-  // Determine which neighbors to load based on position
-  const latIdx = Math.floor(lat / TILE_SIZE);
-  const lonIdx = Math.floor(lon / TILE_SIZE);
-
-  const latPos = (lat - latIdx * TILE_SIZE) / TILE_SIZE;
-  const lonPos = (lon - lonIdx * TILE_SIZE) / TILE_SIZE;
-
-  const tilesToLoad: string[] = [];
-
-  // Near top edge
-  if (latPos > 0.92) tilesToLoad.push(`${i + 1},${j}`);
-  // Near bottom edge
-  if (latPos < 0.08) tilesToLoad.push(`${i - 1},${j}`);
-  // Near right edge
-  if (lonPos > 0.92) tilesToLoad.push(`${i},${j + 1}`);
-  // Near left edge
-  if (lonPos < 0.08) tilesToLoad.push(`${i},${j - 1}`);
-
-  // Load corner tiles if near corners
-  if (latPos > 0.92 && lonPos > 0.92) tilesToLoad.push(`${i + 1},${j + 1}`);
-  if (latPos > 0.92 && lonPos < 0.08) tilesToLoad.push(`${i + 1},${j - 1}`);
-  if (latPos < 0.08 && lonPos > 0.92) tilesToLoad.push(`${i - 1},${j + 1}`);
-  if (latPos < 0.08 && lonPos < 0.08) tilesToLoad.push(`${i - 1},${j - 1}`);
-
-  // Load tiles in parallel
-  await Promise.allSettled(
-    tilesToLoad.map(key => ensureTileLoaded(key).catch(err => {
-      console.warn(`Failed to load neighbor tile ${key}:`, err);
-    }))
-  );
-}
 
 /**
  * aStarWithOnDemandTiles
  *
- * Implement the A* pathfinding algorithm here.
+ * Implement the A* pathfinding algorithm with strategy pattern for distance metrics.
  *
  * @param nodeIds - An array of node IDs that represent the path goals.
  *                  The first ID is the start node, the last ID is the goal node.
+ * @param distanceMetric - Optional custom distance metric function.
+ *                         Defaults to Euclidean distance.
+ *                         Can be set to haversineDistance for more accurate geographic distances.
  *
  * Your task:
  * 1. Implement A* search to find the shortest path from the start node to the goal node (within a tile for Sprint 7).
@@ -164,7 +86,8 @@ async function loadNeighborTiles(lat: number, lon: number, currentKey: string): 
  * @returns A Promise that resolves to an array of node IDs representing the final path.
  */
 export async function aStarWithOnDemandTiles(
-  nodeIds: string[]
+  nodeIds: string[],
+  distanceMetric: DistanceMetric = euclid // or haversineDistance
 ): Promise<string[]> {
   if (nodeIds.length < 2) {
     console.warn("Need at least start and goal nodes");
@@ -185,11 +108,11 @@ export async function aStarWithOnDemandTiles(
   const startNode = nodeIndex[startId];
   const goalNode = nodeIndex[goalId];
 
-  // Heuristic function (Haversine distance to goal)
+  // Heuristic function using the provided distance metric (strategy pattern)
   const heuristic = (nodeId: NodeId): number => {
     const node = nodeIndex[nodeId];
     if (!node) return Infinity;
-    return haversineDistance(node.lat, node.lon, goalNode.lat, goalNode.lon);
+    return distanceMetric(node.lat, node.lon, goalNode.lat, goalNode.lon);
   };
 
   // Initialize data structures

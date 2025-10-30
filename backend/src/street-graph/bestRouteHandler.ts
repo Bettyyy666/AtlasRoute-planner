@@ -1,8 +1,10 @@
 import { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import { RoutingAlgorithm } from "../street-graph/graphSchema.js";
+import { RoutingAlgorithm, DistanceMetric } from "../street-graph/graphSchema.js";
 import { handleShortestPathRequest } from "./shortestTwoPointPath.js";
 import { mockRoutingAlgorithm } from "./mockRoutingAlgorithm.js";
+import { haversineDistance } from "./Astar.js";
+import { euclid } from "./tileUtils.js";
 
 // Use mock algorithm for development
 const USE_MOCK = false;
