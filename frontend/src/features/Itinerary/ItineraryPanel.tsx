@@ -58,6 +58,8 @@ type ItineraryPanelProps = {
   currentTripId: string | null;
   onLoadTrip: (trip: SavedTrip) => void;
   onTripSaved: (tripId: string) => void;
+  distanceMetric: "euclidean" | "haversine";
+  onDistanceMetricChange: (metric: "euclidean" | "haversine") => void;
 };
 
 function formatDate(date: Date): string {
@@ -119,6 +121,8 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
   currentTripId,
   onLoadTrip,
   onTripSaved,
+  distanceMetric,
+  onDistanceMetricChange,
 }) => {
   const dateRange = getDateRange(arrivalDate, departureDate);
   const currentActivities = activitiesByDate[currentDate] || [];
@@ -129,51 +133,25 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
   const [announcement, setAnnouncement] = useState("");
 
   /**
-   * Optimizes the order of activities using a greedy nearest-neighbor algorithm
+   * Toggles between Euclidean and Haversine distance metrics for pathfinding.
+   * Default is Euclidean distance (fast, good for local trips).
+   * Haversine distance accounts for Earth's curvature (more accurate for longer distances).
    */
   const handleBestRoute = () => {
     if (currentActivities.length < 2) {
-      console.log("Add at least 2 activities to optimize the route");
+      console.log("Add at least 2 activities to see the route");
       return;
     }
 
-    console.log("Calculating best route...");
+    // Toggle between euclidean and haversine distance metrics
+    const newMetric = distanceMetric === "euclidean" ? "haversine" : "euclidean";
+    onDistanceMetricChange(newMetric);
 
-    try {
-      // Use greedy nearest-neighbor to find a good ordering
-      const optimized: DatedActivity[] = [];
-      const remaining = [...currentActivities];
-
-      // Start with the first activity
-      optimized.push(remaining.shift()!);
-
-      // Greedily add the nearest unvisited activity
-      while (remaining.length > 0) {
-        const current = optimized[optimized.length - 1];
-        let nearestIndex = 0;
-        let minDistance = Infinity;
-
-        for (let i = 0; i < remaining.length; i++) {
-          // Euclidean distance
-          const distance = Math.sqrt(
-            Math.pow(remaining[i].lat - current.lat, 2) +
-              Math.pow(remaining[i].lng - current.lng, 2)
-          );
-          if (distance < minDistance) {
-            minDistance = distance;
-            nearestIndex = i;
-          }
-        }
-
-        optimized.push(remaining.splice(nearestIndex, 1)[0]);
-      }
-
-      // Update the activities with the optimized order
-      onReorderActivities(currentDate, optimized);
-      console.log("Route optimized successfully!");
-    } catch (error) {
-      console.error("Failed to optimize route:", error);
-    }
+    console.log(
+      `Distance metric switched to: ${newMetric === "euclidean"
+        ? "Euclidean (faster, good for local trips)"
+        : "Haversine (more accurate for longer distances)"}`
+    );
   };
 
   // Highlight options array for screen reader announcements
@@ -356,9 +334,9 @@ const ItineraryPanel: React.FC<ItineraryPanelProps> = ({
         <BestRouteButton
           onClick={handleBestRoute}
           tabIndex={0}
-          aria-label="Best Route - Press Enter to activate"
+          aria-label={`Toggle distance metric (currently ${distanceMetric}) - Press Enter to switch`}
         >
-          Best Route
+          {distanceMetric === "euclidean" ? "Route: Euclidean" : "Route: Haversine"}
         </BestRouteButton>
         <SaveTripButton
           destination={destination}

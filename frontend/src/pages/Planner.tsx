@@ -61,7 +61,10 @@ export const Planner: React.FC<PlannerProps> = ({
   const [highlightMode, setHighlightMode] = useState<
     "none" | "weather" | "redlining"
   >(isSimpleMode ? "none" : "none");
-  
+
+  // Distance metric state for pathfinding
+  const [distanceMetric, setDistanceMetric] = useState<"euclidean" | "haversine">("euclidean");
+
   // Pin folder state
   const [pins, setPins] = useState<Pin[]>([]);
   const [isPinFolderVisible, setIsPinFolderVisible] = useState(false);
@@ -248,6 +251,8 @@ export const Planner: React.FC<PlannerProps> = ({
           currentTripId={currentTripId}
           onLoadTrip={handleLoadTrip}
           onTripSaved={handleTripSaved}
+          distanceMetric={distanceMetric}
+          onDistanceMetricChange={setDistanceMetric}
         />
 
       <div className="planner-map">
@@ -266,6 +271,7 @@ export const Planner: React.FC<PlannerProps> = ({
           lat={location.lat}
           lng={location.lng}
           highlightMode={highlightMode}
+          distanceMetric={distanceMetric}
         />
         </div>
         {/* Pin Folder Components */}

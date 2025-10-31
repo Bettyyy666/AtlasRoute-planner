@@ -108,6 +108,20 @@ export async function aStarWithOnDemandTiles(
   const startNode = nodeIndex[startId];
   const goalNode = nodeIndex[goalId];
 
+  // Log which distance metric is being used
+  const metricName = distanceMetric === euclid ? "Euclidean" :
+                     distanceMetric === haversineDistance ? "Haversine" : "Custom";
+  console.log(`A* using ${metricName} distance metric for pathfinding from ${startId} to ${goalId}`);
+
+  // Test the distance metric to see actual values
+  const testDistanceWithMetric = distanceMetric(startNode.lat, startNode.lon, goalNode.lat, goalNode.lon);
+  const testDistanceEuclid = euclid(startNode.lat, startNode.lon, goalNode.lat, goalNode.lon);
+  const testDistanceHaversine = haversineDistance(startNode.lat, startNode.lon, goalNode.lat, goalNode.lon);
+  console.log(`  Start (${startNode.lat.toFixed(4)}, ${startNode.lon.toFixed(4)}) to Goal (${goalNode.lat.toFixed(4)}, ${goalNode.lon.toFixed(4)})`);
+  console.log(`  Using ${metricName}: ${testDistanceWithMetric.toFixed(6)}`);
+  console.log(`  Euclidean would be: ${testDistanceEuclid.toFixed(6)}`);
+  console.log(`  Haversine would be: ${testDistanceHaversine.toFixed(6)}`);
+
   // Heuristic function using the provided distance metric (strategy pattern)
   const heuristic = (nodeId: NodeId): number => {
     const node = nodeIndex[nodeId];
@@ -136,7 +150,9 @@ export async function aStarWithOnDemandTiles(
 
     // Goal reached - reconstruct path
     if (currentId === goalId) {
-      return reconstructPath(cameFrom, currentId);
+      const path = reconstructPath(cameFrom, currentId);
+      console.log(`  A* found path with ${path.length} nodes, explored ${closedSet.size} nodes`);
+      return path;
     }
 
     closedSet.add(currentId);

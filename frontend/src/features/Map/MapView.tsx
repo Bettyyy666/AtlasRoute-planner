@@ -36,9 +36,10 @@ type Props = {
   lat: number;
   lng: number;
   highlightMode: HighlightMode;
+  distanceMetric: "euclidean" | "haversine";
 };
 
-export default function MapView({ markers, lat, lng, highlightMode }: Props) {
+export default function MapView({ markers, lat, lng, highlightMode, distanceMetric }: Props) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null);
   const markerRefs = useRef<mapboxgl.Marker[]>([]);
@@ -158,12 +159,12 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
 
     // If we have 2 or more markers, fetch and display the route
     if (markers.length >= 2) {
-      fetchAndDisplayRoute(markers);
+      fetchAndDisplayRoute(markers, distanceMetric);
     }
 
     // Fetch and display geographic boundaries for each marker
     fetchAndRenderGeographicBoundaries();
-  }, [markers, mapInstance]);
+  }, [markers, mapInstance, distanceMetric]);
 
   // Fetch and render weather polygons
   const fetchAndRenderWeatherPolygons = async (display: boolean = true) => {
@@ -372,7 +373,7 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
           features: uniqueCounties,
         };
 
-        console.log("Counties GeoJSON data:", JSON.stringify(countiesGeoJSON, null, 2));
+        // console.log("Counties GeoJSON data:", JSON.stringify(countiesGeoJSON, null, 2));
 
         mapInstance.addSource("counties", {
           type: "geojson",
@@ -461,8 +462,10 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
   };
 
   // Fetch and display route between markers
-  const fetchAndDisplayRoute = async (activities: DatedActivity[]) => {
+  const fetchAndDisplayRoute = async (activities: DatedActivity[], metric: "euclidean" | "haversine") => {
     if (!mapInstance || activities.length < 2) return;
+
+    console.log(`[MapView] Fetching route with distance metric: ${metric}`);
 
     try {
       const points = activities.map(activity => ({
@@ -470,7 +473,12 @@ export default function MapView({ markers, lat, lng, highlightMode }: Props) {
         lng: activity.lng
       }));
 
-      const response = await axios.post('http://localhost:3001/find-path', { points });
+      console.log(`[MapView] Sending request with ${points.length} points and metric: ${metric}`);
+
+      const response = await axios.post('http://localhost:3001/find-path', {
+        points,
+        distanceMetric: metric
+      });
 
       if (response.status === 200 && response.data) {
         const pathCoordinates = response.data.path;

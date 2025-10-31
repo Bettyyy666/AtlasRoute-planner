@@ -3,13 +3,28 @@ import dotenv from "dotenv";
 import { RoutingAlgorithm, DistanceMetric } from "../street-graph/graphSchema.js";
 import { handleShortestPathRequest } from "./shortestTwoPointPath.js";
 import { mockRoutingAlgorithm } from "./mockRoutingAlgorithm.js";
-import { haversineDistance } from "./Astar.js";
-import { euclid } from "./tileUtils.js";
+import { haversineDistance, euclid } from "./tileUtils.js";
 
 // Use mock algorithm for development
 const USE_MOCK = false;
 
 dotenv.config();
+
+/**
+ * Get the distance metric function based on the metric type string from frontend.
+ * Defaults to undefined (which uses Euclidean in A*) if not specified or invalid.
+ */
+function getDistanceMetric(metricType?: string): DistanceMetric | undefined {
+  switch (metricType) {
+    case "haversine":
+      return haversineDistance;
+    case "euclidean":
+      return euclid;
+    default:
+      // Return undefined to use the default Euclidean distance in A*
+      return undefined;
+  }
+}
 
 /**
  * registerFindPathHandler
@@ -52,16 +67,24 @@ export function registerFindPathHandler(
 ) {
   app.post("/find-path", async (req: Request, res: Response) => {
     try {
-      const { points } = req.body;
+      const { points, distanceMetric } = req.body;
+
+      console.log(`[FIND-PATH] Received request with ${points?.length} points and distanceMetric: "${distanceMetric}"`);
 
       if (!points || points.length < 2) {
         return res.status(400).json({ error: "At least 2 points are required" });
       }
 
+      // Get the distance metric function based on the request
+      const metric = getDistanceMetric(distanceMetric);
+      console.log(`[FIND-PATH] Converted to metric function: ${metric ? (metric === haversineDistance ? "haversineDistance" : metric === euclid ? "euclid" : "unknown") : "undefined (will use default)"}`);
+
       // Use mock algorithm for development, otherwise use the real one
-      const result = USE_MOCK 
+      const result = USE_MOCK
         ? await mockRoutingAlgorithm(points)
-        : await handleShortestPathRequest(points, algorithm);
+        : await handleShortestPathRequest(points, algorithm, metric);
+
+      console.log(`[FIND-PATH] Path calculation complete with ${result.path?.length || 0} waypoints`);
 
       // Return the result to the frontend
       res.status(200).json(result);

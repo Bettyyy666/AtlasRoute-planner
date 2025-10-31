@@ -1,4 +1,5 @@
-import { aStarWithOnDemandTiles, DistanceMetric } from "./Astar.js";
+import { aStarWithOnDemandTiles } from "./Astar.js";
+import { DistanceMetric } from "./graphSchema.js";
 export type NodeId = string;
 
 /**
