@@ -103,9 +103,12 @@ The hottest roads in a global trip heatmap would likely be major urban arterial 
 This heatmap insight suggests we should implement popularity-based edge weighting where frequently-traveled roads receive slight preference in pathfinding, similar to how Google Maps uses aggregate travel data to identify "preferred routes." In our current implementation (see Astar.ts), we use pure distance-based heuristics (euclid or haversineDistance) without considering road popularity, but we could enhance this by: (1) precomputing edge popularity scores from historical trip data and storing them as additional metadata in our GraphTile structure (currently just nodes and neighbors in graphSchema.ts), allowing us to bias the A* cost function toward roads that real users actually prefer; (2) implementing a hybrid cost function like cost = distance * (1 - 0.1 * popularity_score) that gives a 10% distance penalty to unpopular roads, effectively making popular roads "cheaper" to traverse; and (3) using popularity data to inform our tile-loading strategy in lazyLoader.ts, prioritizing the loading of tiles containing high-traffic roads to reduce latency for the most common queries. The key insight is that not all paths are equally likely to be queried—by focusing optimization efforts on the paths users actually request, we can achieve disproportionate performance improvements on real-world queries even if worst-case performance remains unchanged.
 
 #### Question 3
-#####
-#####
-#####
+A road’s efficiency depends on more than geometry. Three dimensions that matter in a real path‑finding service—and are present in OSM—are: 
+(1) speed limits and time‑of‑day rules, captured by `way.tags.maxspeed` and `way.tags["maxspeed:conditional"]` (e.g., `50 @ (Mo‑Fr 07:00‑19:00)`), which directly convert length into travel time; 
+(2) legal access by mode, via `way.tags.access`, `motor_vehicle`, `bicycle`, `foot`, and `access:conditional`, which determines whether an edge is traversable for a given user and time; 
+(3) directionality and turn restrictions, where `way.tags.oneway` enforces permitted flow and `relation.tags.type=restriction` with `restriction=*` plus members `from`/`via`/`to` forbids specific maneuvers at intersections. In practice, fetch ways and restriction relations with Overpass QL using outputs that include tags (e.g., `out body`), expand relation members, and then read `elements[].tags` for ways and relations. 
+
+Carry these fields into the graph to compute realistic travel times, enforce legality, and respect intersection rules—yielding routes far closer to real‑world behavior than distance alone.
 
 ### Design Choices
 
@@ -114,14 +117,15 @@ This heatmap insight suggests we should implement popularity-based edge weightin
 #### How To…
 
 #### Team members and contributions (include cs logins):
-Yanmi Yu(yyu111): Task B, Task C, supplemental challenge
-Rui Zhou(rzhou52): Task A, supplemental challenge
+Yanmi Yu(yyu111): Task A(only test), Task B, Task C, supplemental challenge 3
+Rui Zhou(rzhou52): Task A, supplemental challenge 1 2
 
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
-Claude 3.7/ChatGPT4: explianing code functionality when starting, idea inspriation, generate a set of example code, syntax check, debug logic, comments, gramma. 
+Claude 3.7/ChatGPT4: explianing code functionality when starting, idea inspriation, generate a set of example code(both A* implementation and testing), explaining important concept, syntax check, debug logic, comments, gramma. 
 
 
 #### Total estimated time it took to complete project:
+16
 
 #### Link to GitHub Repo:
 https://github.com/cs0320-f25/pins-and-pathfinding-rzhou52-yyu111

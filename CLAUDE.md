@@ -498,3 +498,83 @@ When debugging, check sprint README files:
 - ACS API: https://api.census.gov/data/2023/acs/acs5/subject/
 - Mapbox GL: https://docs.mapbox.com/mapbox-gl-js/
 - React DnD Kit: https://docs.dndkit.com/
+
+## Pathfinding Test Plan (Sprint 7)
+
+**Objectives**
+- Validate that the backend A* implementation finds a “best path” between two pins quickly and reliably.
+- For this sprint, verify path existence and path length (number of nodes) rather than exact node sequences.
+- Confirm endpoint `POST /find-path` integration and frontend route rendering work as expected.
+
+**Scope**
+- Algorithms: `Astar.ts` (A*), `multiStopAStar.ts` (multi-stop chaining), `shortestTwoPointPath.ts` (nearest node + conversion).
+- API: `POST /find-path` via `bestRouteHandler.ts` and registration in `server.ts`.
+- Frontend: `MapView.tsx` route fetch and line rendering (smoke checks only).
+
+**Unit Tests (Backend)**
+- A* finds a path in a single tile
+  - Seed a tiny graph (`graphCache`) with nodes `A-B-C-D` in tile `0,0`.
+  - Confirm path exists and length equals expected minimal hops (e.g., 4 nodes).
+  - Run with default metric (Euclidean) and custom metric (Haversine) via strategy pattern.
+- No-path scenario
+  - Two disconnected components in the same tile → expect `[]`.
+- Missing start/goal
+  - If either node is absent from the index → expect `[]`.
+- Multiple correct answers
+  - Construct a graph with two equal‑cost routes; assert existence and minimal length only (not exact sequence).
+- Near-edge behavior (deferred detailed checks)
+  - Keep test nodes away from tile boundaries to avoid neighbor prefetch.
+  - Deeper neighbor‑tile loading validation is deferred to the next sprint.
+- Multi-stop chaining
+  - Seed nodes for three stops; verify `routeThroughStops` concatenates segments, skipping duplicate junction nodes.
+  - Validate overall path existence and reasonable length growth vs. pairwise paths.
+- Strategy pattern correctness
+  - Pass `haversineDistance` and confirm the algorithm accepts custom distance metrics and still returns valid paths.
+
+**Integration Tests (Backend API)**
+- Implemented in `backend/src/street-graph/testing/findPath.integration.test.ts`.
+- `POST /find-path` happy path
+  - Body: `{ points: [{lat,lng}, {lat,lng}], distanceMetric: "euclidean" | "haversine" }`.
+  - Expect `200`, a `path` array of `{lat,lng}`, and length ≥ 2.
+  - Tests both default and explicit distance metrics.
+- Metric mapping
+  - Verify `distanceMetric` string correctly maps to `euclid` or `haversine` in handler.
+  - Tests `euclidean`, `haversine`, and unknown metrics.
+- Validation errors
+  - Fewer than 2 points → `400`.
+  - Non‑numeric `lat/lng` → handled gracefully with timeout protection.
+  - Tests missing points, insufficient points, invalid formats.
+- Multi‑point (3+ waypoints)
+  - Ensure path is returned and length reflects concatenated segments.
+  - Tests 3‑point waypoint routing.
+- Performance checks
+  - Lightweight response time validation (< 1 second for simple paths).
+- Server health
+  - Health check endpoint validation.
+
+- San Francisco real‑data cases (single tile)
+  - Seeds tile `377,-1225` with POIs: Cable Carts, Nintendo Store, Tadaima, Japan Center, Fillmore, Kevin Chris Pho, City Lights.
+  - Valid 2‑point route within SF tile: Cable Carts → Japan Center (haversine metric).
+  - Multi‑waypoint route within SF tile: Cable Carts → Tadaima → Japan Center → Fillmore (euclidean metric).
+
+- Dev server real‑data cases (multi‑tile, live Overpass)
+  - Implemented in `backend/src/street-graph/testing/findPath.dev.integration.test.ts` (requires running backend dev server).
+  - Validates routing across real SF POIs with live tile fetching and neighbor preloading.
+  - Uses tile warm‑ups (short nearby requests) to reduce Overpass latency and rate limits.
+  - Per‑test timeouts increased (up to 30s) with `AbortController` safeguards.
+  - Fail‑fast: suite checks `http://localhost:3001/` in `beforeAll` and throws if the server isn’t running.
+  - No silent skips: server‑up guards removed so each test truly requires the live backend.
+
+**Test Data & Fixtures**
+- In‑memory `graphCache` seeding with a single `GraphTile`:
+  - Keep coordinates centered within tile `0,0` (e.g., around `0.05, 0.05`) to avoid edge‑triggered neighbor loads.
+  - Use realistic weights (e.g., Haversine) for adjacent edges to keep heuristic admissible.
+  - Make direct “shortcut” edges deliberately more expensive when testing optimality.
+- San Francisco tile seeding:
+  - Seed tile key `377,-1225` (computed via `latIdx=floor(37.78/0.1)`, `lngIdx=floor(-122.43/0.1)`).
+  - Include POIs and connect nearby locations with bidirectional edges.
+  - Edge weights use `haversineDistance` to keep heuristic admissible; keep all coords within the same tile to avoid neighbor tile loads.
+- Dev server fixtures:
+  - Real tiles fetched via `ensureTileLoaded` → `waitForGraphTiles` → Overpass API.
+  - Warm tiles with short requests near target routes (e.g., central SF and western SF) before longer routes.
+  - Prefer multi‑waypoint sequences to keep segments local and predictable across tiles.
