@@ -116,6 +116,10 @@ Carry these fields into the graph to compute realistic travel times, enforce leg
 #### Tests:
 #### How To…
 
+Issue: Distance Metrics Not Affecting Routes. When I toggling between Euclidean and Haversine distance metrics, it produced identical routes
+Investigation: Added comprehensive logging throughout the call chain (frontend → backend → A*)
+Resolution: Metrics WERE working correctly—both found the same optimal 419-node path, but with dramatically different efficiency (Haversine: 7,912 nodes explored vs Euclidean: 56,788 nodes explored). The metrics affect search efficiency and heuristic, not necessarily the final path when there's only one optimal route.
+
 #### Team members and contributions (include cs logins):
 Yanmi Yu(yyu111): Task A(only test), Task B, Task C, supplemental challenge 3
 Rui Zhou(rzhou52): Task A, supplemental challenge 1 2
