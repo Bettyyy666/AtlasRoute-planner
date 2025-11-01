@@ -84,11 +84,24 @@ For data users, privacy mechanisms such as differential privacy and spatial mask
 
 ### Supplemental Challenge (S_DIST/1340)
 #### Question 1
-#####
-#####
-#####
-#####
+##### 1. Hierarchical Graph Partitioning and Contraction Hierarchies
+Our implementation uses a simple tile-based system with 0.1-degree tiles (see tileUtils.ts) and lazy-loads tiles on-demand, with our A* algorithm exploring every node within relevant tiles. In contrast, Google Maps employs Contraction Hierarchies (CH) or similar preprocessing algorithms that create a hierarchical road network where local roads are "contracted" and represented by shortcuts at higher levels, highway nodes are assigned higher importance ranks, and long-distance queries skip exploring local streets entirely by jumping directly to highway-level nodes. For example, a query from San Francisco to New York would immediately jump to Interstate 80 nodes without ever exploring residential streets. While our A* explored 56,788 nodes for a local route (as seen in our debug logs), Google's hierarchical approach might explore only hundreds of nodes for a cross-country route because it operates at multiple abstraction levels, dramatically reducing the search space and computation time.
+
+##### 2. Precomputed Distance Tables and Landmark-Based Heuristics 
+We calculate distances on-demand using either Euclidean or Haversine formulas during A* search, with our heuristic function computing distanceMetric(node.lat, node.lon, goalNode.lat, goalNode.lon) for every node expansion. Google Maps uses extensive preprocessing to precompute shortest paths between landmark nodes (major intersections, highway junctions), store "edge flags" that indicate which edges are relevant for queries in specific geographic directions, and employ ALT (A*, Landmarks, Triangle inequality) algorithms where precomputed distances to strategically-placed landmarks provide much tighter heuristic bounds than simple straight-line distance. By caching partial routes between frequently-queried pairs and using these landmarks to prune entire graph sections that can't possibly be on the optimal path, Google achieves both better heuristic admissibility (more accurate estimates of remaining distance) and more aggressive search space pruning, allowing the algorithm to confidently skip exploring large portions of the road network that our simpler heuristic must still consider. 
+
+##### 3. Distributed Spatial Databases with Geographically-Aware Sharding
+Our system loads graph tiles from the filesystem and stores them in a simple JavaScript object cache (graphCache: Record<TileKey, GraphTile> = {}), with our lazy loader queuing tile loads sequentially, which blocks pathfinding progress while waiting for disk I/O. Google Maps uses distributed databases (likely a custom system similar to Bigtable or Spanner) with geographic sharding where road data is physically stored on servers nearest to that region, critical highway data is replicated globally for low-latency access, and multiple database servers respond simultaneously to parallel tile fetch requests. Their in-memory graph structures are optimized for cache locality using adjacency arrays instead of hash maps, and they can fetch dozens of tiles in parallel with sub-millisecond latency from nearby datacenters. While our system loads tiles serially from disk with 10-100ms+ per tile, Google's distributed architecture enables them to handle complex cross-country queries without the sequential bottleneck that limits our performance.
+
+
+##### 4. Real-Time Traffic Integration and Dynamic Rerouting
+Our pathfinding uses static edge weights based purely on geographic distance, with our distance metric computing only spatial separation without considering current road conditions, traffic congestion, or temporal factors. Google Maps incorporates real-time traffic data from millions of Android phones, active Google Maps users, and partner data sources to dynamically adjust edge weights, uses historical traffic patterns to predict congestion by time of day and day of week, employs machine learning models to forecast traffic conditions 30-60 minutes ahead, and implements dynamic rerouting that automatically recalculates paths when traffic conditions change mid-journey without requiring user intervention. This means Google provides not just the geographically shortest path, but the fastest path considering current and predicted conditions—while our system would naively route users onto a highway experiencing a 2-hour traffic jam simply because it's the shortest static distance, Google would proactively redirect them to alternative routes that may be longer in distance but faster in actual travel time.
+
 #### Question 2
+The hottest roads in a global trip heatmap would likely be major urban arterial roads and connectors to transportation hubs rather than highways, because most human trips are short-distance and local. Specifically, I expect the hottest roads would include: (1) roads immediately surrounding major transit stations, like the penn station in New York and the Back Bay station in Boston, where millions of commuters funnel through daily; (2) downtown business district arterials in major cities like Manhattan's Midtown streets (42nd Street, Broadway, 5th Avenue), Boston's Newbury Street, or LA's Beverly Hills, which serve as multi-modal corridors for pedestrians, buses, taxis, and delivery vehicles; (3) airport approach roads and rental car facility connectors, such as the roads leading to LAX, Heathrow, which concentrate both passenger drop-offs and commercial traffic. Contrary to intuition, long-distance highways like Interstate 80 would show moderate heat but not the absolute hottest, because while many people use them, each individual uses them infrequently (perhaps a few times per year for road trips), whereas urban commuters traverse the same downtown arterials twice daily, 250+ days per year. 
+
+This heatmap insight suggests we should implement popularity-based edge weighting where frequently-traveled roads receive slight preference in pathfinding, similar to how Google Maps uses aggregate travel data to identify "preferred routes." In our current implementation (see Astar.ts), we use pure distance-based heuristics (euclid or haversineDistance) without considering road popularity, but we could enhance this by: (1) precomputing edge popularity scores from historical trip data and storing them as additional metadata in our GraphTile structure (currently just nodes and neighbors in graphSchema.ts), allowing us to bias the A* cost function toward roads that real users actually prefer; (2) implementing a hybrid cost function like cost = distance * (1 - 0.1 * popularity_score) that gives a 10% distance penalty to unpopular roads, effectively making popular roads "cheaper" to traverse; and (3) using popularity data to inform our tile-loading strategy in lazyLoader.ts, prioritizing the loading of tiles containing high-traffic roads to reduce latency for the most common queries. The key insight is that not all paths are equally likely to be queried—by focusing optimization efforts on the paths users actually request, we can achieve disproportionate performance improvements on real-world queries even if worst-case performance remains unchanged.
+
 #### Question 3
 #####
 #####
@@ -101,8 +114,8 @@ For data users, privacy mechanisms such as differential privacy and spatial mask
 #### How To…
 
 #### Team members and contributions (include cs logins):
-Yanmi Yu(yyu111): Task B, Task C
-Rui Zhou(rzhou52): Task A
+Yanmi Yu(yyu111): Task B, Task C, supplemental challenge
+Rui Zhou(rzhou52): Task A, supplemental challenge
 
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
 Claude 3.7/ChatGPT4: explianing code functionality when starting, idea inspriation, generate a set of example code, syntax check, debug logic, comments, gramma. 
