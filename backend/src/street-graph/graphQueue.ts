@@ -1,6 +1,7 @@
 import { graphCache } from "../globalVariables.js";
 import { fetchGraphDataFromAPI } from "./fetchGraphFromAPI.js";
 import { BBox, GraphTile } from "./graphSchema.js";
+import { hasCachedTile, loadCachedTile, saveCachedTile, evictDiskCacheLFU } from "./diskCache.js";
 
 /**
  * Represents a queued graph tile fetch.
@@ -72,12 +73,24 @@ export function enqueueGraphTask(
 
 /**
  * Continuously processes the tile queue until empty.
- * Handles retries, backoff, and ingesting data into memory.
- * DO NOT modify this function but do understand how it works.
+ * Handles retries, backoff, disk caching, and ingesting data into memory.
  */
 async function processGraphQueue() {
   while (graphTaskQueue.length > 0) {
     const { tileKey, tileSize, resolve, reject } = graphTaskQueue.shift()!;
+
+    // Check disk cache first (much faster than API call)
+    if (hasCachedTile(tileKey)) {
+      const cachedTile = loadCachedTile(tileKey);
+      if (cachedTile) {
+        graphCache[tileKey] = cachedTile;
+        resolve();
+        graphTileMap.delete(tileKey);
+        continue;
+      }
+    }
+
+    // Not in cache - fetch from API
     const [minLat, minLon, maxLat, maxLon] = tileKeyToBounds(tileKey, tileSize);
     const bbox: BBox = [minLon, minLat, maxLon, maxLat];
 
@@ -93,6 +106,15 @@ async function processGraphQueue() {
       try {
         const tileData: GraphTile = await fetchGraphDataFromAPI(bbox);
         graphCache[tileKey] = tileData;
+
+        // Save to disk cache for future use
+        saveCachedTile(tileKey, tileData);
+
+        // Periodically evict old tiles to stay under limit
+        if (Math.random() < 0.1) {
+          evictDiskCacheLFU(500); // 500 MB limit
+        }
+
         resolve();
         done = true;
       } catch (err: any) {

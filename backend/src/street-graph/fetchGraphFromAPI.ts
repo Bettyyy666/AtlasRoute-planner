@@ -44,9 +44,10 @@ export async function fetchGraphDataFromAPI(bbox: BBox): Promise<GraphTile> {
     return Math.hypot(dx, dy);
   };
 
-  // Fetch only major road types
+  // Fetch major road types including link roads for bridges/interchanges
+  // Link roads are essential for cross-borough routing (bridges, tunnels, highway ramps)
   const highwayRegex =
-    "^(motorway|trunk|primary|secondary|tertiary|unclassified|residential)$";
+    "^(motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|residential|living_street)$";
 
   // Overpass QL query: get all roads in bounding box, expand to nodes
   const query = `

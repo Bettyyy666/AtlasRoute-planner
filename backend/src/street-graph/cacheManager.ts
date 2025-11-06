@@ -27,22 +27,25 @@ interface TileMetadata {
 
 /**
  * Default cache configuration
+ *
+ * For long-distance routing, we keep a smaller in-memory cache (top 500-1000 tiles)
+ * and rely on disk cache for the rest. This balances speed with memory usage.
  */
 export const CACHE_CONFIG = {
-  /** Maximum number of tiles to keep in memory */
-  maxTiles: 150,
+  /** Maximum number of tiles to keep in memory (top N most relevant) */
+  maxTiles: 500,
 
   /** Maximum memory usage (approximate, in MB) */
-  maxMemoryMB: 200,
+  maxMemoryMB: 50,
 
   /** Enable disk caching for frequently accessed tiles */
-  enableDiskCache: false,
+  enableDiskCache: true,
 
   /** Directory for disk cache (relative to backend root) */
   diskCacheDir: "./data/tile-cache",
 
-  /** Minimum access count before persisting to disk */
-  diskCacheThreshold: 3,
+  /** Minimum access count before considering "relevant" */
+  relevanceThreshold: 2,
 };
 
 /**
@@ -153,10 +156,10 @@ export function evictIfNeeded(): void {
   for (let i = 0; i < Math.min(toEvict, candidates.length); i++) {
     const key = candidates[i].key;
 
-    // Optionally persist to disk before evicting
+    // Optionally persist to disk before evicting (if frequently accessed)
     if (CACHE_CONFIG.enableDiskCache) {
       const meta = tileMetadata.get(key);
-      if (meta && meta.accessCount >= CACHE_CONFIG.diskCacheThreshold) {
+      if (meta && meta.accessCount >= CACHE_CONFIG.relevanceThreshold) {
         persistTileToDisk(key, graphCache[key]);
       }
     }

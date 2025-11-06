@@ -4,6 +4,7 @@ import { getNeighbors, getTileKeyForNode, loadNeighborTiles } from "./lazyLoader
 import { preloadCorridorTiles, estimateCorridorTileCount } from "./corridorLoader.js";
 import { touchTile, evictIfNeeded, markCorridorTiles } from "./cacheManager.js";
 import { getCorridorTiles } from "./corridorLoader.js";
+import { graphCache } from "../globalVariables.js";
 
 // Re-export haversineDistance so callers can use it as a distance metric
 export { haversineDistance };
@@ -103,6 +104,35 @@ export async function aStarWithOnDemandTiles(
 
   if (!nodeIndex[startId] || !nodeIndex[goalId]) {
     console.error("Start or goal node not found in graph");
+    return [];
+  }
+
+  // Quick connectivity check: do start and goal have neighbors?
+  let startHasNeighbors = false;
+  let goalHasNeighbors = false;
+  let startNeighborCount = 0;
+  let goalNeighborCount = 0;
+
+  for (const tile of Object.values(graphCache)) {
+    if (tile.neighbors[startId]?.length > 0) {
+      startHasNeighbors = true;
+      startNeighborCount = tile.neighbors[startId].length;
+    }
+    if (tile.neighbors[goalId]?.length > 0) {
+      goalHasNeighbors = true;
+      goalNeighborCount = tile.neighbors[goalId].length;
+    }
+  }
+
+  console.log(`  Start node ${startId} has ${startNeighborCount} neighbors`);
+  console.log(`  Goal node ${goalId} has ${goalNeighborCount} neighbors`);
+
+  if (!startHasNeighbors) {
+    console.error(`⚠️  Start node ${startId} has NO neighbors - isolated node!`);
+    return [];
+  }
+  if (!goalHasNeighbors) {
+    console.error(`⚠️  Goal node ${goalId} has NO neighbors - isolated node!`);
     return [];
   }
 
@@ -286,9 +316,20 @@ export async function aStarWithOnDemandTiles(
     }
   }
 
-  // No path found
+  // No path found - check if nodes are in different connected components
   const elapsed = (Date.now() - startTime) / 1000;
   console.warn(`No path found from ${startId} to ${goalId} after ${iterations} iterations (${elapsed.toFixed(1)}s)`);
+
+  // Diagnostic info
+  console.warn(`  Explored ${closedSet.size} nodes out of ${Object.keys(nodeIndex).length} total nodes in graph`);
+  const explorationPercent = (closedSet.size / Object.keys(nodeIndex).length * 100).toFixed(1);
+  console.warn(`  Exploration: ${explorationPercent}% of loaded graph`);
+
+  if (closedSet.size > 10000) {
+    console.warn(`  ⚠️  Large exploration suggests graph may be disconnected at bridges/tunnels`);
+    console.warn(`  💡 Try routes within the same borough, or check if road types include *_link roads`);
+  }
+
   return [];
 }
 

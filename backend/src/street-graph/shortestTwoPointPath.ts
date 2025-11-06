@@ -33,7 +33,26 @@ export async function handleShortestPathRequest(
   await ensureStartGoalTiles(points);
 
   // 2. Find the nearest graph nodes to the requested points
-  const nodes = points.map((p) => findNearestGraphNode(p));
+  const nodes = points.map((p, idx) => {
+    const nodeId = findNearestGraphNode(p);
+    const nodeIndex = buildNodeIndex();
+    const node = nodeId ? nodeIndex[nodeId] : null;
+    console.log(`  Point ${idx + 1}: (${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}) → Node ${nodeId} at (${node?.lat.toFixed(4)}, ${node?.lon.toFixed(4)})`);
+
+    // Check if node has neighbors
+    if (nodeId && graphCache) {
+      let neighborCount = 0;
+      for (const tile of Object.values(graphCache)) {
+        if (tile.neighbors[nodeId]) {
+          neighborCount = tile.neighbors[nodeId].length;
+          break;
+        }
+      }
+      console.log(`    Node ${nodeId} has ${neighborCount} neighbors`);
+    }
+
+    return nodeId;
+  });
 
   // 3. Call the routing algorithm (e.g., your A* implementation) with optional distance metric
   const pathIds = await algorithm(nodes as string[], distanceMetric);

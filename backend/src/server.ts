@@ -22,6 +22,7 @@ import { geographicBoundariesHandler } from "./geographic-boundaries/geographicB
 import { parseCSV } from "./CSV-parser/basic-parser.js";
 import { fileURLToPath } from 'url';
 import fs from "fs/promises";
+import { initDiskCache } from "./street-graph/diskCache.js";
 
 /**
  * Class representing the backend server application.
@@ -108,6 +109,9 @@ export class ServerApp {
    * Starts the Express server on the configured port.
    */
   public start() {
+    // Initialize disk cache for graph tiles
+    initDiskCache();
+
     this.app.listen(this.port, () => {
       console.log(`Backend running at http://localhost:${this.port}`);
     });
