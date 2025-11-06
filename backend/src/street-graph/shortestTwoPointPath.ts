@@ -68,17 +68,76 @@ export function tileKeyFromCoord(
 }
 
 /**
- * Ensures that both the start and goal tiles are loaded before routing.
+ * Ensures that all waypoint tiles AND connecting corridor tiles are loaded before routing.
+ * This prevents A* from getting stuck at tile boundaries.
  */
 async function ensureStartGoalTiles(points: { lat: number; lng: number }[]) {
+  // Collect all unique tile keys for waypoints
+  const waypointTiles = new Set<string>();
+  for (const point of points) {
+    const tileKey = tileKeyFromCoord(point.lat, point.lng, TILE_SIZE);
+    waypointTiles.add(tileKey);
+  }
+
+  console.log(`Loading ${waypointTiles.size} waypoint tiles: ${Array.from(waypointTiles).join(', ')}`);
+
+  // Load all waypoint tiles in parallel
+  await Promise.all(
+    Array.from(waypointTiles).map(key =>
+      ensureTileLoaded(key).catch(err => {
+        console.error(`Failed to load waypoint tile ${key}:`, err);
+        throw err;
+      })
+    )
+  );
+
+  // For short routes (< 5 tiles apart), also preload connecting tiles
+  // This prevents A* from missing paths that cross tile boundaries
   const start = points[0];
   const goal = points[points.length - 1];
-
   const startKey = tileKeyFromCoord(start.lat, start.lng, TILE_SIZE);
   const goalKey = tileKeyFromCoord(goal.lat, goal.lng, TILE_SIZE);
 
-  await ensureTileLoaded(startKey);
-  await ensureTileLoaded(goalKey);
+  const [startLat, startLng] = startKey.split(',').map(Number);
+  const [goalLat, goalLng] = goalKey.split(',').map(Number);
+
+  const latDistance = Math.abs(goalLat - startLat);
+  const lngDistance = Math.abs(goalLng - startLng);
+  const tileDistance = Math.max(latDistance, lngDistance);
+
+  if (tileDistance > 0 && tileDistance < 5) {
+    // Load corridor tiles between start and goal
+    const corridorTiles = new Set<string>();
+
+    const minLat = Math.min(startLat, goalLat);
+    const maxLat = Math.max(startLat, goalLat);
+    const minLng = Math.min(startLng, goalLng);
+    const maxLng = Math.max(startLng, goalLng);
+
+    // Load all tiles in the bounding box
+    for (let lat = minLat; lat <= maxLat; lat++) {
+      for (let lng = minLng; lng <= maxLng; lng++) {
+        const key = `${lat},${lng}`;
+        if (!waypointTiles.has(key)) {
+          corridorTiles.add(key);
+        }
+      }
+    }
+
+    if (corridorTiles.size > 0) {
+      console.log(`Loading ${corridorTiles.size} corridor tiles: ${Array.from(corridorTiles).join(', ')}`);
+      await Promise.all(
+        Array.from(corridorTiles).map(key =>
+          ensureTileLoaded(key).catch(err => {
+            console.warn(`Failed to load corridor tile ${key}:`, err);
+            // Don't throw - corridor tiles are optional
+          })
+        )
+      );
+    }
+  }
+
+  console.log(`Total tiles loaded: ${Object.keys(graphCache).length}`);
 }
 
 /**
