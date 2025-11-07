@@ -49,9 +49,16 @@ export function enqueueGraphTask(
   tileKey: string,
   tileSize: number
 ): Promise<void> {
-  if (graphTileMap.has(tileKey)) return graphTileMap.get(tileKey)!;
-  if (graphCache[tileKey]) return Promise.resolve();
+  if (graphTileMap.has(tileKey)) {
+    console.log(`[QUEUE] Tile ${tileKey} already in-flight, returning existing promise`);
+    return graphTileMap.get(tileKey)!;
+  }
+  if (graphCache[tileKey]) {
+    console.log(`[QUEUE] Tile ${tileKey} already in cache, resolving immediately`);
+    return Promise.resolve();
+  }
 
+  console.log(`[QUEUE] Enqueuing tile ${tileKey} for loading`);
   const promise = new Promise<void>((resolve, reject) => {
     graphTaskQueue.push({ tileKey, tileSize, resolve, reject });
   });
@@ -60,9 +67,20 @@ export function enqueueGraphTask(
 
   // Ensure the queue processor runs
   if (!graphProcessPromise) {
+    console.log(`[QUEUE] Starting queue processor`);
     graphProcessPromise = processGraphQueue().finally(() => {
+      console.log(`[QUEUE] Queue processor finished`);
       graphProcessPromise = null;
+      // If more tiles were added while we were finishing, restart the processor
+      if (graphTaskQueue.length > 0) {
+        console.log(`[QUEUE] Queue not empty (${graphTaskQueue.length} tiles), restarting processor`);
+        graphProcessPromise = processGraphQueue().finally(() => {
+          graphProcessPromise = null;
+        });
+      }
     });
+  } else {
+    console.log(`[QUEUE] Processor already running, tile will be picked up`);
   }
 
   return promise.catch((e) => {
@@ -79,11 +97,15 @@ async function processGraphQueue() {
   while (graphTaskQueue.length > 0) {
     const { tileKey, tileSize, resolve, reject } = graphTaskQueue.shift()!;
 
+    console.log(`[QUEUE] Processing tile ${tileKey} (queue length: ${graphTaskQueue.length})`);
+
     // Check disk cache first (much faster than API call)
     if (hasCachedTile(tileKey)) {
+      console.log(`[QUEUE] Tile ${tileKey} found in disk cache, loading...`);
       const cachedTile = loadCachedTile(tileKey);
       if (cachedTile) {
         graphCache[tileKey] = cachedTile;
+        console.log(`[QUEUE] Tile ${tileKey} loaded from cache, resolving promise`);
         resolve();
         graphTileMap.delete(tileKey);
         continue;
