@@ -116,20 +116,24 @@ export async function bidirectionalAstar(
                      distanceMetric === haversineDistance ? "Haversine" : "Custom";
   console.log(`Bidirectional A* using ${metricName} from ${startId} to ${goalId}`);
 
-  // Preload corridor tiles
+  // Preload corridor tiles with larger buffer to capture bridges and highways
+  // For long-distance routes, we need a wider corridor to find major roads
+  const straightMeters = haversineDistance(startNode.lat, startNode.lon, goalNode.lat, goalNode.lon);
+  const corridorBuffer = straightMeters > 20000 ? 5 : 3; // 5 tiles for >20km routes, 3 otherwise
+
   const corridorTileKeys = getCorridorTiles(
     startNode.lat, startNode.lon,
     goalNode.lat, goalNode.lon,
-    1 // buffer
+    corridorBuffer
   );
   markCorridorTiles(corridorTileKeys);
 
-  console.log(`Preloading ${corridorTileKeys.length} corridor tiles...`);
+  console.log(`Preloading ${corridorTileKeys.length} corridor tiles (buffer: ${corridorBuffer})...`);
   await preloadCorridorTiles(
     startNode.lat, startNode.lon,
     goalNode.lat, goalNode.lon,
-    1, // buffer
-    3, // batch size
+    corridorBuffer,
+    5, // batch size increased from 3 to 5
     (loaded, total) => {
       const elapsed = (Date.now() - startTime) / 1000;
       console.log(`  Loaded ${loaded}/${total} tiles (${elapsed.toFixed(1)}s)`);
@@ -184,7 +188,8 @@ export async function bidirectionalAstar(
   let bestTotalCost = Infinity;
 
   let iterations = 0;
-  const maxIterations = 100000; // Safety limit
+  // Increase iteration limit for long-distance routes (>20km need more iterations)
+  const maxIterations = straightMeters > 20000 ? 500000 : 100000;
 
   // Alternating bidirectional search
   while (!fwdOpenSet.isEmpty() && !bwdOpenSet.isEmpty() && iterations < maxIterations) {
