@@ -51,13 +51,16 @@ export default function AdConsentDialog({
         const docSnap = await getDoc(preferencesRef);
 
         if (docSnap.exists()) {
-          setPreferences(docSnap.data() as AdPreferences);
+          const data = docSnap.data() as AdPreferences;
+          console.log("📖 Loaded ad preferences from Firebase:", data);
+          setPreferences(data);
         } else {
           // First time: use defaults (all OFF)
+          console.log("📖 No existing preferences found, using defaults");
           setPreferences(DEFAULT_PREFERENCES);
         }
       } catch (error) {
-        console.error("Error loading ad preferences:", error);
+        console.error("❌ Error loading ad preferences:", error);
         setPreferences(DEFAULT_PREFERENCES);
       } finally {
         setLoading(false);
@@ -86,13 +89,20 @@ export default function AdConsentDialog({
         "privacy",
         "adPreferences"
       );
-      await setDoc(preferencesRef, {
+
+      const dataToSave = {
         ...preferences,
         lastUpdated: Date.now(),
-      });
+      };
+
+      console.log("📝 Saving ad preferences to Firebase:", dataToSave);
+
+      await setDoc(preferencesRef, dataToSave);
+
+      console.log("✅ Successfully saved ad preferences");
       onClose();
     } catch (error) {
-      console.error("Error saving ad preferences:", error);
+      console.error("❌ Error saving ad preferences:", error);
       alert("Failed to save preferences. Please try again.");
     } finally {
       setSaving(false);

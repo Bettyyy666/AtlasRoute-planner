@@ -47,6 +47,7 @@ import { parseCSV } from "./CSV-parser/basic-parser.js";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import { initDiskCache } from "./street-graph/diskCache.js";
+import { registerAdRecommendationHandler } from "./utils/adRecommendationHandler.js";
 
 /**
  * Class representing the backend server application.
@@ -152,6 +153,9 @@ export class ServerApp {
 
     // Register geographic boundaries endpoint
     this.app.get("/geographic-boundaries", geographicBoundariesHandler);
+
+    // Register ad recommendation handlers
+    registerAdRecommendationHandler(this.app);
   }
 
   /**

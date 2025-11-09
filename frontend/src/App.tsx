@@ -13,6 +13,7 @@ import { SimpleModeProvider } from "./contexts/SimpleModeContext";
 import { DarkModeProvider } from "./contexts/DarkModeContext";
 import AdConsentDialog from "./components/AdConsentDialog";
 import AdPreferencesFloatingButton from "./components/AdPreferencesFloatingButton";
+import AdCarousel from "./components/AdCarousel";
 
 const clerkFrontendApi = import.meta.env.VITE_CLERK_FRONTEND_API;
 
@@ -62,6 +63,9 @@ function App() {
 
           {/* Floating button for anytime access to preferences */}
           {isUserLoggedIn && <AdPreferencesFloatingButton />}
+
+          {/* Ad Carousel - displays personalized or random ads */}
+          <AdCarousel />
         </Router>
       </SimpleModeProvider>
     </DarkModeProvider>
