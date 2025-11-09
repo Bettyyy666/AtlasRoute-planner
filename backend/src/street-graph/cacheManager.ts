@@ -59,6 +59,13 @@ const tileMetadata = new Map<string, TileMetadata>();
 const corridorTiles = new Set<string>();
 
 /**
+ * Diagnostic list of recently-evicted tiles. Test/diagnostic code can read
+ * this using `consumeEvictedTiles()` to see which tiles were removed by
+ * the eviction policy during a run.
+ */
+export const evictedTiles: string[] = [];
+
+/**
  * Record tile access for LRU tracking.
  */
 export function touchTile(key: string, priority: number = 0): void {
@@ -166,6 +173,8 @@ export function evictIfNeeded(): void {
 
     delete graphCache[key];
     corridorTiles.delete(key);
+    // Record evicted tile for diagnostics
+    evictedTiles.push(key);
     console.log(`  Evicted tile ${key} (score: ${candidates[i].score.toFixed(0)})`);
   }
 
@@ -227,6 +236,38 @@ export function clearCache(): void {
   tileMetadata.clear();
   corridorTiles.clear();
   console.log("Cache cleared");
+}
+
+/**
+ * Return and clear the diagnostic list of evicted tiles.
+ */
+export function consumeEvictedTiles(): string[] {
+  const out = evictedTiles.splice(0, evictedTiles.length);
+  return out;
+}
+
+/**
+ * Temporarily mark a set of tiles as critical (priority 2) to prevent eviction.
+ * Returns a map of previous priorities so the caller can restore them later.
+ */
+export function holdTilesCritical(keys: string[]): Record<string, number> {
+  const prev: Record<string, number> = {};
+  for (const k of keys) {
+    const meta = (tileMetadata.get(k) as TileMetadata | undefined);
+    prev[k] = meta ? meta.priority : 0;
+    touchTile(k, 2);
+  }
+  return prev;
+}
+
+/**
+ * Restore previously-saved tile priorities (from holdTilesCritical)
+ */
+export function restoreTilePriorities(prev: Record<string, number>): void {
+  for (const k of Object.keys(prev)) {
+    const meta = tileMetadata.get(k);
+    if (meta) meta.priority = prev[k];
+  }
 }
 
 /**
