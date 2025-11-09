@@ -1,0 +1,43 @@
+/* Ad Preferences Floating Button */
+
+.ad-preferences-floating-btn {
+  position: fixed;
+  bottom: 110px;
+  right: 35px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #007bff;
+  border: none;
+  cursor: pointer;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+.ad-preferences-floating-btn:hover {
+  background-color: #0056b3;
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.6);
+}
+
+.ad-preferences-floating-btn:active {
+  transform: scale(0.95);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .ad-preferences-floating-btn {
+    background-color: #0056b3;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+
+  .ad-preferences-floating-btn:hover {
+    background-color: #003a7a;
+    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+  }
+}
