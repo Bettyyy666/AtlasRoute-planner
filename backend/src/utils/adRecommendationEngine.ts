@@ -218,7 +218,9 @@ function extractCategoriesFromTrips(trips: any[]): string[] {
               const activityCategories = pinCategoryMap[activityName];
               activityCategories.forEach((cat) => categories.add(cat));
               console.log(
-                `    ✓ Activity "${activityName}" → ${activityCategories.join(", ")}`
+                `    ✓ Activity "${activityName}" → ${activityCategories.join(
+                  ", "
+                )}`
               );
             }
           });
@@ -578,7 +580,9 @@ function filterAdsByKeywords(
       );
       if (hasSensitiveCategory) {
         console.log(
-          `    ✗ Ad filtered (sensitive): "${ad.title}" - ${ad.category.join(", ")}`
+          `    ✗ Ad filtered (sensitive): "${ad.title}" - ${ad.category.join(
+            ", "
+          )}`
         );
         return false;
       }
@@ -609,12 +613,16 @@ function filterAdsByKeywords(
 
     if (matchesUserCategory) {
       console.log(
-        `    ✓ Ad matches keywords: "${ad.title}" - Categories: ${ad.category.join(", ")}`
+        `    ✓ Ad matches keywords: "${
+          ad.title
+        }" - Categories: ${ad.category.join(", ")}`
       );
       return true;
     } else {
       console.log(
-        `    ✗ Ad filtered (no match): "${ad.title}" - ${ad.category.join(", ")}`
+        `    ✗ Ad filtered (no match): "${ad.title}" - ${ad.category.join(
+          ", "
+        )}`
       );
       return false;
     }
