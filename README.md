@@ -34,6 +34,14 @@ One concern I identified during implementation is that noise injection can occas
 
 ### For everyone: What does an “A” grade look like? (AI use: none)
 
+whu34:In Previous sprints completing the red-highlighed functionality feature was never my only goal. As an enigneer, I kept thinking how real users would perceive our webiste if it were truly deployed, or If I have to design another product like this, how would that feature looks like. For example, When users add trips, how could they best manage those trips and adding/updating/deleting pins from those trips afterwards.
+
+However, this mindset also caused me to overcommit cause I didn't want to just check boxes for functionality; I wanted to build something that actually meaningful and made sense to my users. Such that, I often spent more time than others doing my sprint.
+
+This Sprint changed how I think about that balance. Without a fixed rubric, I had to define for myself what "a good feature" and "a good test suites" should look like. For example, I focused on making my data reques endpoint both lofical and visually polished. But I soon realized that this didn't improve the actual users' experience. Most of users don't really need a nicely formated display,what they want is just accessible raw JSON data to analyze and work on later and my design was actually unintentionally limiting their freedom of using data.
+
+After this, I understand that `A-level` quality is not just about balancing functionality and aesthetics.Thinking from the user’s perspective matters more than spending extra hours perfecting implementation details. Also, As a enigneer, time is valuable, when you start doing something, you need to think about the possibility of success and whether those designs are explainable and user-centered - being able to justify why a choice makes the product more successful. If we could do that, I totally believe that would be 100% a A-level quality of work.
+
 ### Supplemental Challenge (S_DIST/1340) (AI use: code only)
 
 ### Design Choices
@@ -46,10 +54,14 @@ One concern I identified during implementation is that noise injection can occas
 
 #### Team members and contributions (include cs logins):
 
+whu34: TASK C/D
+
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
 
 #### Total estimated time it took to complete project:
 
 #### Link to GitHub Repo:
+
+https://github.com/cs0320-f25/privacy-and-pathfinding-go-aggies.git
 
 #### Link to asynchronous demo:
