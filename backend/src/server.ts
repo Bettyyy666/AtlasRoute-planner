@@ -10,19 +10,44 @@ import { registerHighlightRedliningHandler } from "./red-linning/redLinningHandl
 import { registerFilterHandler } from "./filter/filterHandler.js";
 import { registerFindPathHandler } from "./street-graph/bestRouteHandler.js";
 import { routeThroughStops } from "./street-graph/multiStopAStar.js";
-// import { registerSaveTripHandler } from "./firebase/registerSaveTripHandler.js"; 
+// import { registerSaveTripHandler } from "./firebase/registerSaveTripHandler.js";
 import { registerSaveTripHandler } from "./firebase/registerSaveTripHandler-SECURE.js";
 import { registerPinFolderHandlers } from "./firebase/registerPinFolderHandlers.js";
 import { registerReviewHandlers } from "./firebase/registerReviewHandlers.js";
-import { registerGetCSVHandler, CSVParserFunction } from "./CSV-parser/csvParserHandler.js";
-import { registerACSProxyHandler, StateFIPSFetcher, ACSDataFetcher, getStateFIPS, fetchACSData } from "./acs/acsProxyHandler.js";
-import { registerFBIQueryHandler, registerFBIStaffQueryHandler, fetchFBIData, loadAPIKey, getStateFIPS as getFBIStateFIPS, getCountyFIPS, getPlaceFIPS, mockAPIKeyLoader, mockFBIDataFetcher} from "./fbi-query/fbiQueryHandler.js";
-import { registerTransitQueryHandler, mockTransitDataFetcher, mockTransitAPIKeyLoader } from "./SupplementalChallenge4/transitQueryHandler.js";
+import { registerDataRequestHandler } from "./firebase/dataRequestHandler.js";
+import {
+  registerGetCSVHandler,
+  CSVParserFunction,
+} from "./CSV-parser/csvParserHandler.js";
+import {
+  registerACSProxyHandler,
+  StateFIPSFetcher,
+  ACSDataFetcher,
+  getStateFIPS,
+  fetchACSData,
+} from "./acs/acsProxyHandler.js";
+import {
+  registerFBIQueryHandler,
+  registerFBIStaffQueryHandler,
+  fetchFBIData,
+  loadAPIKey,
+  getStateFIPS as getFBIStateFIPS,
+  getCountyFIPS,
+  getPlaceFIPS,
+  mockAPIKeyLoader,
+  mockFBIDataFetcher,
+} from "./fbi-query/fbiQueryHandler.js";
+import {
+  registerTransitQueryHandler,
+  mockTransitDataFetcher,
+  mockTransitAPIKeyLoader,
+} from "./SupplementalChallenge4/transitQueryHandler.js";
 import { geographicBoundariesHandler } from "./geographic-boundaries/geographicBoundariesHandler.js";
 import { parseCSV } from "./CSV-parser/basic-parser.js";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import { initDiskCache } from "./street-graph/diskCache.js";
+import { registerAdRecommendationHandler } from "./utils/adRecommendationHandler.js";
 
 /**
  * Class representing the backend server application.
@@ -82,9 +107,11 @@ export class ServerApp {
   private registerHandlers() {
     // Add a simple root route handler
     this.app.get("/", (req, res) => {
-      res.send("API Server is running. Available endpoints: /getcsv, /activityLocations, etc.");
+      res.send(
+        "API Server is running. Available endpoints: /getcsv, /activityLocations, etc."
+      );
     });
-    
+
     registerCSVHandler(this.app, fetchActivityDataFromGoogleSheet);
     registerWeatherCSVHandler(this.app, fetchWeatherInBoundingBox);
     registerInitLocationHandler(this.app);
@@ -95,14 +122,40 @@ export class ServerApp {
     registerSaveTripHandler(this.app);
     registerPinFolderHandlers(this.app);
     registerReviewHandlers(this.app);
-    registerACSProxyHandler(this.app, this.stateFIPSFetcher, this.acsDataFetcher); // Using injected dependencies
+    registerDataRequestHandler(this.app);
+    registerACSProxyHandler(
+      this.app,
+      this.stateFIPSFetcher,
+      this.acsDataFetcher
+    ); // Using injected dependencies
     registerGetCSVHandler(this.app, this.csvParser, this.fileExistsFn); // Using injected dependencies
-    registerFBIQueryHandler(this.app, this.stateFIPSFetcher, getCountyFIPS, getPlaceFIPS, fetchFBIData, loadAPIKey); // Register FBI query handler
-    registerFBIStaffQueryHandler(this.app, this.stateFIPSFetcher, getCountyFIPS, getPlaceFIPS, fetchFBIData, loadAPIKey); // Register FBI staff query handler
-    registerTransitQueryHandler(this.app, mockTransitDataFetcher, mockTransitAPIKeyLoader);
-    
+    registerFBIQueryHandler(
+      this.app,
+      this.stateFIPSFetcher,
+      getCountyFIPS,
+      getPlaceFIPS,
+      fetchFBIData,
+      loadAPIKey
+    ); // Register FBI query handler
+    registerFBIStaffQueryHandler(
+      this.app,
+      this.stateFIPSFetcher,
+      getCountyFIPS,
+      getPlaceFIPS,
+      fetchFBIData,
+      loadAPIKey
+    ); // Register FBI staff query handler
+    registerTransitQueryHandler(
+      this.app,
+      mockTransitDataFetcher,
+      mockTransitAPIKeyLoader
+    );
+
     // Register geographic boundaries endpoint
     this.app.get("/geographic-boundaries", geographicBoundariesHandler);
+
+    // Register ad recommendation handlers
+    registerAdRecommendationHandler(this.app);
   }
 
   /**

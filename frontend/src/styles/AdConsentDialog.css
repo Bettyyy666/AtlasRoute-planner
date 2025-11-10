@@ -1,0 +1,221 @@
+/* Ad Consent Dialog Styles */
+
+.ad-consent-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ad-consent-modal {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ad-consent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.ad-consent-header h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.ad-consent-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.ad-consent-close:hover {
+  background-color: #f0f0f0;
+}
+
+.ad-consent-body {
+  padding: 24px;
+  flex: 1;
+}
+
+.ad-consent-intro {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.ad-consent-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+}
+
+.ad-consent-preferences {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ad-consent-item {
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 16px;
+  background-color: #f9f9f9;
+}
+
+.ad-consent-toggle-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ad-consent-checkbox {
+  margin-top: 4px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.ad-consent-label {
+  cursor: pointer;
+  flex: 1;
+}
+
+.ad-consent-label strong {
+  display: block;
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.ad-consent-description {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.ad-consent-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #e5e5e5;
+  justify-content: flex-end;
+}
+
+.ad-consent-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.ad-consent-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ad-consent-btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.ad-consent-btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.ad-consent-btn-secondary {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #d0d0d0;
+}
+
+.ad-consent-btn-secondary:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .ad-consent-modal {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+  }
+
+  .ad-consent-header {
+    border-bottom-color: #444;
+  }
+
+  .ad-consent-header h2 {
+    color: #e0e0e0;
+  }
+
+  .ad-consent-close {
+    color: #999;
+  }
+
+  .ad-consent-close:hover {
+    background-color: #3a3a3a;
+  }
+
+  .ad-consent-intro {
+    color: #b0b0b0;
+  }
+
+  .ad-consent-item {
+    border-color: #444;
+    background-color: #3a3a3a;
+  }
+
+  .ad-consent-label strong {
+    color: #e0e0e0;
+  }
+
+  .ad-consent-description {
+    color: #999;
+  }
+
+  .ad-consent-footer {
+    border-top-color: #444;
+  }
+
+  .ad-consent-btn-secondary {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    border-color: #555;
+  }
+
+  .ad-consent-btn-secondary:hover:not(:disabled) {
+    background-color: #444;
+  }
+}

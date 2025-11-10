@@ -72,6 +72,96 @@ export default function SaveTripButton({
     try {
       const idToken = await user.getIdToken();
 
+      // Map city names to state and country for better ad targeting
+      const cityStateMap: {
+        [key: string]: {
+          state: string;
+          stateAbbr: string;
+          country: string;
+          countryAbbr: string;
+        };
+      } = {
+        "New York": {
+          state: "New York",
+          stateAbbr: "NY",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        "San Francisco": {
+          state: "California",
+          stateAbbr: "CA",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        "Los Angeles": {
+          state: "California",
+          stateAbbr: "CA",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        Chicago: {
+          state: "Illinois",
+          stateAbbr: "IL",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        Seattle: {
+          state: "Washington",
+          stateAbbr: "WA",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        Denver: {
+          state: "Colorado",
+          stateAbbr: "CO",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        Boston: {
+          state: "Massachusetts",
+          stateAbbr: "MA",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        Austin: {
+          state: "Texas",
+          stateAbbr: "TX",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        Miami: {
+          state: "Florida",
+          stateAbbr: "FL",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        Phoenix: {
+          state: "Arizona",
+          stateAbbr: "AZ",
+          country: "USA",
+          countryAbbr: "USA",
+        },
+        London: {
+          state: "England",
+          stateAbbr: "EN",
+          country: "UK",
+          countryAbbr: "UK",
+        },
+        Tokyo: {
+          state: "Tokyo",
+          stateAbbr: "TY",
+          country: "Japan",
+          countryAbbr: "JP",
+        },
+      };
+
+      const locationInfo = cityStateMap[destination.name] || {
+        state: "",
+        stateAbbr: "",
+        country: "",
+        countryAbbr: "",
+      };
+
       // Prepare trip data matching backend schema
       const tripData = {
         userId: user.uid,
@@ -80,6 +170,8 @@ export default function SaveTripButton({
           name: destination.name,
           lat: destination.lat,
           lng: destination.lng,
+          state: locationInfo.state,
+          country: locationInfo.country,
         },
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
@@ -106,11 +198,13 @@ export default function SaveTripButton({
           : "Trip saved successfully!";
         toast.success(message);
         console.log(
-          response.data.isUpdate ? "Trip updated with ID:" : "Trip saved with ID:",
+          response.data.isUpdate
+            ? "Trip updated with ID:"
+            : "Trip saved with ID:",
           response.data.tripId
         );
         onTripSaved(response.data.tripId);
-        
+
         // Sync pins from all trips to the pin folder
         try {
           await axios.post(
@@ -164,9 +258,19 @@ export default function SaveTripButton({
       className={`bg-blue-500 text-white rounded px-4 py-2 ${
         saving ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-600"
       }`}
-      aria-label={currentTripId ? "Update current trip in cloud storage" : "Save current itinerary to cloud storage"}
+      aria-label={
+        currentTripId
+          ? "Update current trip in cloud storage"
+          : "Save current itinerary to cloud storage"
+      }
     >
-      {saving ? (currentTripId ? "Updating..." : "Saving...") : (currentTripId ? "Update Trip" : "Save Trip")}
+      {saving
+        ? currentTripId
+          ? "Updating..."
+          : "Saving..."
+        : currentTripId
+        ? "Update Trip"
+        : "Save Trip"}
     </button>
   );
 }
