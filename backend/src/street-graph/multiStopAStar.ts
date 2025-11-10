@@ -2,8 +2,7 @@ import { aStarWithOnDemandTiles } from "./Astar.js";
 import { DistanceMetric } from "./graphSchema.js";
 import { getCorridorTiles } from "./corridorLoader.js";
 import { buildNodeIndex, ensureTileLoaded, haversineDistance } from "./tileUtils.js";
-import { bidirectionalAstar } from "./bidirectionalAstar.js";
-import { markCorridorTiles, consumeEvictedTiles, getCacheStats, holdTilesCritical, restoreTilePriorities } from "./cacheManager.js";
+import { markCorridorTiles, consumeEvictedTiles, getCacheStats, holdTilesCritical, restoreTilePriorities, evictIfNeeded } from "./cacheManager.js";
 import { graphCache } from "../globalVariables.js";
 export type NodeId = string;
 
@@ -33,7 +32,16 @@ export async function routeThroughStops(
   }
 
   if (nodeIds.length === 2) {
-    // Just run A* once for two nodes
+    // For 2-point routes
+    const nodeIndex = buildNodeIndex();
+    const start = nodeIndex[nodeIds[0]];
+    const goal = nodeIndex[nodeIds[1]];
+
+    if (start && goal) {
+      const straightMeters = haversineDistance(start.lat, start.lon, goal.lat, goal.lon);
+      const straightKm = straightMeters / 1000;
+      console.log(`2-point route: finding path for ${straightKm.toFixed(1)} km route`);
+    }
     return await aStarWithOnDemandTiles(nodeIds, distanceMetric);
   }
 
@@ -54,11 +62,19 @@ export async function routeThroughStops(
       const a = nodeIndex[nodeIds[i]];
       const b = nodeIndex[nodeIds[i + 1]];
       if (!a || !b) continue;
-      // Use a larger buffer when computing the union so we don't
-      // miss nearby connector tiles (bridges/ramps/highways) that fall outside
-      // a narrow corridor. For long routes, we need to capture major roads.
+      // Adaptive corridor buffer based on segment distance
+      // Reduced buffer sizes for faster loading when Overpass is overloaded
       const segmentDist = haversineDistance(a.lat, a.lon, b.lat, b.lon);
-      const bufferSize = segmentDist > 20000 ? 5 : 3; // 5 tiles for >20km segments
+      let bufferSize = 2;
+      if (segmentDist > 150000) {
+        bufferSize = 4; // 4 tiles for >150km (reduced from 7 for API overload)
+      } else if (segmentDist > 100000) {
+        bufferSize = 4; // 4 tiles for >100km (reduced from 6)
+      } else if (segmentDist > 50000) {
+        bufferSize = 3; // 3 tiles for >50km (reduced from 5)
+      } else if (segmentDist > 20000) {
+        bufferSize = 3; // 3 tiles for >20km (reduced from 4)
+      }
       const keys = getCorridorTiles(a.lat, a.lon, b.lat, b.lon, bufferSize);
       for (const k of keys) corridorSet.add(k);
     }
@@ -69,12 +85,25 @@ export async function routeThroughStops(
 
       // Report cache stats before preload
       console.log("Cache before stitching preload:", getCacheStats());
-      // Mark corridor tiles to raise their retention priority in cache
+
+      // Mark corridor tiles to raise their retention priority (but not critical)
+      // For very long routes, marking all tiles as critical causes OOM
       markCorridorTiles(keys);
 
-  // Temporarily hold corridor tiles as critical to avoid eviction during
-  // the multi-stop routing operation. We'll restore priorities afterwards.
-  prevPrioritiesToRestore = holdTilesCritical(keys);
+      // Only mark start/goal tiles as critical to prevent eviction
+      // Let other corridor tiles be evictable if memory pressure is high
+      const startTileKey = Object.keys(graphCache).find(k =>
+        graphCache[k].nodes.some(n => n.id === nodeIds[0])
+      );
+      const endTileKey = Object.keys(graphCache).find(k =>
+        graphCache[k].nodes.some(n => n.id === nodeIds[nodeIds.length - 1])
+      );
+
+      const criticalTiles = [startTileKey, endTileKey].filter(Boolean) as string[];
+      if (criticalTiles.length > 0) {
+        prevPrioritiesToRestore = holdTilesCritical(criticalTiles);
+        console.log(`Marked ${criticalTiles.length} start/goal tiles as critical (not all ${keys.length} corridor tiles)`);
+      }
 
       // Load in batches to avoid overwhelming the tile queue
       // Larger batches for better parallelization
@@ -84,6 +113,11 @@ export async function routeThroughStops(
         await Promise.allSettled(
           batch.map((k) => ensureTileLoaded(k).catch(() => undefined))
         );
+
+        // Aggressively evict non-critical tiles every 50 tiles for memory management
+        if (i % 50 === 0 && i > 0) {
+          evictIfNeeded();
+        }
       }
       // Report cache stats and any evicted tiles after preload
       console.log("Cache after stitching preload:", getCacheStats());
@@ -130,18 +164,17 @@ export async function routeThroughStops(
     const sNode = nodeIndexNow[start];
     const eNode = nodeIndexNow[end];
 
-    // If this is a long-distance segment, prefer bidirectional A*
+    // Choose routing algorithm based on segment distance
     let segmentPath: string[] = [];
     if (sNode && eNode) {
       const straightMeters = haversineDistance(sNode.lat, sNode.lon, eNode.lat, eNode.lon);
-      if (straightMeters > 20_000) {
-        console.log(`Segment ${i + 1}: using bidirectional A* for long segment (${(straightMeters/1000).toFixed(1)} km)`);
-        segmentPath = await bidirectionalAstar([start, end], distanceMetric);
-      } else {
-        segmentPath = await aStarWithOnDemandTiles([start, end], distanceMetric);
-      }
+      const straightKm = straightMeters / 1000;
+
+      console.log(`Segment ${i + 1}/${nodeIds.length - 1}: finding path for ${straightKm.toFixed(1)} km segment`);
+      segmentPath = await aStarWithOnDemandTiles([start, end], distanceMetric);
     } else {
       // Fallback if node coords unavailable
+      console.log(`Segment ${i + 1}/${nodeIds.length - 1}: finding path (distance unknown)`);
       segmentPath = await aStarWithOnDemandTiles([start, end], distanceMetric);
     }
 
@@ -237,11 +270,6 @@ function validateGraphConnectivity(startNodeId: string, goalNodeId: string): boo
 
   console.warn(`Start and goal nodes are not connected. Start: ${startNodeId}, Goal: ${goalNodeId}`);
   return false;
-}
-
-// Log bidirectional A* progress
-function logBidirectionalProgress(forwardVisited: Set<string>, backwardVisited: Set<string>): void {
-  console.log(`Bidirectional A* progress: Forward visited ${forwardVisited.size} nodes, Backward visited ${backwardVisited.size} nodes.`);
 }
 
 // Expand corridor preloading buffer for the second segment

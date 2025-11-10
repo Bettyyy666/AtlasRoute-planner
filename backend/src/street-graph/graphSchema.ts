@@ -52,15 +52,29 @@ export const NeighborSchema = z.object({
 });
 
 /**
+ * Metadata about a tile's content and fetch mode
+ */
+export const TileMetadataSchema = z.object({
+  fetchMode: z.enum(["backbone", "express", "detailed"]).optional(),
+  containsMotorway: z.boolean().optional(),
+  containsInterstate: z.boolean().optional(),
+  containsHighway: z.boolean().optional(),
+  interstateRefs: z.array(z.string()).optional(),
+  edgeCount: z.number().optional(),
+});
+
+/**
  * A tile of graph data. Each tile contains:
  * - `tileKey`: unique key for the tile (lat/lon grid)
  * - `nodes`: all nodes in this tile
  * - `neighbors`: adjacency list of nodes -> neighbors
+ * - `metadata`: optional metadata about tile contents and fetch mode
  */
 export const GraphTileSchema = z.object({
   tileKey: z.string(),
   nodes: z.array(GraphNodeSchema),
   neighbors: z.record(z.string(), z.array(NeighborSchema)),
+  metadata: TileMetadataSchema.optional(),
 });
 
 /**
@@ -85,6 +99,23 @@ export const PathResponseSchema = z.object({
 // ---------------------------
 // Exported Types
 // ---------------------------
+
+/**
+ * Different modes for loading graph data
+ */
+export type FetchMode = "backbone" | "express" | "detailed";
+
+/**
+ * Metadata about a tile's content and fetch mode
+ */
+export interface TileMetadata {
+  fetchMode?: FetchMode;
+  containsMotorway?: boolean;
+  containsInterstate?: boolean;
+  containsHighway?: boolean;
+  interstateRefs?: string[];
+  edgeCount?: number;
+}
 
 /**
  * Bounding box tuple [minLon, minLat, maxLon, maxLat]

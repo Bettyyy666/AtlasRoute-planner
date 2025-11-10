@@ -33,10 +33,10 @@ interface TileMetadata {
  */
 export const CACHE_CONFIG = {
   /** Maximum number of tiles to keep in memory (top N most relevant) */
-  maxTiles: 500,
+  maxTiles: 1000, // Increased from 500 for long-distance routing
 
   /** Maximum memory usage (approximate, in MB) */
-  maxMemoryMB: 50,
+  maxMemoryMB: 100, // Increased from 50 for long-distance routing
 
   /** Enable disk caching for frequently accessed tiles */
   enableDiskCache: true,
