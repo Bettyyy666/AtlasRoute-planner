@@ -44,6 +44,46 @@ After this, I understand that `A-level` quality is not just about balancing func
 
 ### Supplemental Challenge (S_DIST/1340) (AI use: code only)
 
+For Supplemental challenge, we followed the suggestions by Copilot for implementing this feature.
+
+The first thing we do is gathering data of important nodes&edges. We focused more onthe east coast pins, and we specifically are looking for Highway: I-95/ I-295 / US-1/ etc. Cause these routes are the highways most likely to be included in the fastest path. And we asked overpass Api to give us the info above these.
+
+After that we got a list of nodes and ways and removed unnessary points to make file samller, and we saved everything to a JSON file called `east-coast-corridor.json`. We loaded this json everytime we start the server.
+
+And after all these work. We asked `copilot` to write a benchmark tests for us to compare the perfomance of route finding with or without preloading the important route json file.
+
+We choose three following paths for testing since these three paths are both located at east coast and the main highways are the highways we included in our json file.
+
+1.Providence Zoo → Central Park
+
+📈 Improvement:
+Speedup: 97.6%
+Time saved: 9017ms
+Nodes reduction: 66.7%
+Tiles reduction: 0.0%
+
+2.Boston → NYC
+
+📈 Improvement:
+Speedup: 93.0%
+Time saved: 13940ms
+Nodes reduction: 67.0%
+Tiles reduction: 0.0%
+
+3.Philadelphia → DC
+📈 Improvement:
+Speedup: 84.5%
+Time saved: 5257ms
+Nodes reduction: 3.7%
+Tiles reduction: 0.0%
+
+# ✨ SUMMARY STATISTICS
+
+Average Speedup: 91.7% faster with preloaded data
+Average Time Saved: 9405ms per route
+Average Node Reduction: 45.8%
+Average Tile Reduction: 0.0%
+
 ### Design Choices
 
 #### Errors/Bugs:

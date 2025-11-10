@@ -47,6 +47,7 @@ import { parseCSV } from "./CSV-parser/basic-parser.js";
 import { fileURLToPath } from "url";
 import fs from "fs/promises";
 import { initDiskCache } from "./street-graph/diskCache.js";
+import { loadAllCorridorBundles } from "./street-graph/corridorCacheLoader.js";
 import { registerAdRecommendationHandler } from "./utils/adRecommendationHandler.js";
 
 /**
@@ -161,9 +162,12 @@ export class ServerApp {
   /**
    * Starts the Express server on the configured port.
    */
-  public start() {
+  public async start() {
     // Initialize disk cache for graph tiles
     initDiskCache();
+
+    // Load pre-generated corridor bundles for fast routing
+    await loadAllCorridorBundles();
 
     this.app.listen(this.port, () => {
       console.log(`Backend running at http://localhost:${this.port}`);
@@ -186,5 +190,8 @@ export class ServerApp {
 const isMain = process.argv[1] === fileURLToPath(import.meta.url);
 if (isMain) {
   const server = new ServerApp();
-  server.start();
+  server.start().catch((err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  });
 }

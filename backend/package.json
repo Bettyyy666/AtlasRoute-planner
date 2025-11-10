@@ -10,7 +10,9 @@
     "test:external": "RUN_EXTERNAL=true vitest run",
     "test:watch": "vitest watch",
     "test:file": "vitest run",
-    "debug": "node --inspect --enable-source-maps --loader ts-node/esm src/server.ts"
+    "debug": "node --inspect --enable-source-maps --loader ts-node/esm src/server.ts",
+    "benchmark": "node --loader ts-node/esm src/benchmarkRoutePerformance.ts",
+    "generate:corridor": "node --loader ts-node/esm src/generate-important-roads-east-coast.ts"
   },
   "keywords": [],
   "author": "",
