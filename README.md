@@ -42,6 +42,8 @@ This Sprint changed how I think about that balance. Without a fixed rubric, I ha
 
 After this, I understand that `A-level` quality is not just about balancing functionality and aesthetics.Thinking from the user’s perspective matters more than spending extra hours perfecting implementation details. Also, As a enigneer, time is valuable, when you start doing something, you need to think about the possibility of success and whether those designs are explainable and user-centered - being able to justify why a choice makes the product more successful. If we could do that, I totally believe that would be 100% a A-level quality of work.
 
+rzhou52: For me, an "A" grade means building something that actually works well and that I'm proud to show off. It's not just about checking boxes—it's about delivering real value in a way that shows good judgment and care. First, the feature needs to work completely, not just in the perfect scenario. If something goes wrong, the system should handle it smoothly instead of crashing or confusing the user. I need to think through the edge cases and make sure my code doesn't break when things get messy. Second, my code should be clean and easy to understand. If I come back to it in a month, or if someone else needs to work with it, they shouldn't have to spend hours figuring out what I was thinking. Good naming, clear structure, and sensible design choices matter. Testing is also key. I don't need to test every single line, but the main features should have automated tests so I know they work and will keep working as I make changes. This gives me confidence that I'm not accidentally breaking things. Most importantly, I've learned that being user-friendly separates good work from just functional work. Does my feature make sense to someone using it? Are the error messages helpful? Would I actually want to use this myself? That's what really shows quality.
+
 ### Supplemental Challenge (S_DIST/1340) (AI use: code only)
 
 For Supplemental challenge, we followed the suggestions by Copilot for implementing this feature.
@@ -94,6 +96,7 @@ Average Tile Reduction: 0.0%
 
 #### Team members and contributions (include cs logins):
 
+rzhou52: TASK A/B 
 whu34: TASK C/D supplemental challenge
 
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
