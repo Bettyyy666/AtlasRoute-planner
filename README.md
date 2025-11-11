@@ -94,14 +94,22 @@ Average Tile Reduction: 0.0%
 
 #### Team members and contributions (include cs logins):
 
-whu34: TASK C/D
+whu34: TASK C/D supplemental challenge
 
 #### Collaborators (cslogins of anyone you worked with on this project or generative AI):
 
+I used ChatGPT - GPT4.1 to help with understanding the handout. And help me to generate the possible prompts for coiplot. I used copilot claude sonnet 4.5 agent mode to help me with debugging and implementing the TASK C/D and supplemental challenge. I manually checked most of the code and test to ensure everything is working.
+
+The corresponding prompt history could be found in:
+
 #### Total estimated time it took to complete project:
+
+20 hrs
 
 #### Link to GitHub Repo:
 
 https://github.com/cs0320-f25/privacy-and-pathfinding-go-aggies.git
 
 #### Link to asynchronous demo:
+
+https://brown.zoom.us/rec/play/8i6Mid_YjyCUrn1183TtvJodslCZJu8GdYvCtjEYBhzuaqSBZ4-9lU7i9iKJdmaxaxF1ElCUbUH6HECk.VtuDmRn9go_jtJRC?autoplay=true&startTime=1762831349000
